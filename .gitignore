@@ -12,3 +12,5 @@ desktop.ini
 .claude/
 node_modules/
 *.log
+
+.vercel
