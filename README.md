@@ -4,8 +4,10 @@ A working prototype of a fraud-screening engine for **UPI payment screenshots** 
 WhatsApp. Built as a single self-contained HTML file — no build step, no server, no
 internet connection required.
 
-> **[▶ Open the prototype](fraud-detection-prototype.html)** — download the file and
-> double-click it, or clone the repo and open it in any browser.
+> ### ▶ [Live demo — printshop39-byte.github.io/fraudshield-upi](https://printshop39-byte.github.io/fraudshield-upi/)
+>
+> Nothing to install. Or clone the repo and open `index.html` directly — it runs
+> the same offline.
 
 ---
 
@@ -150,11 +152,16 @@ Customer sends UPI screenshot on WhatsApp
 
 ## Running it
 
+Open the **[live demo](https://printshop39-byte.github.io/fraudshield-upi/)** — nothing to
+install.
+
+To run it locally instead:
+
 ```bash
 git clone https://github.com/printshop39-byte/fraudshield-upi.git
 ```
 
-Then open `fraud-detection-prototype.html` in any modern browser. That's the whole setup.
+Then open `index.html` in any modern browser. That's the whole setup.
 
 No npm, no Python, no server. The page works fully offline — webfonts are loaded from
 Google Fonts when a connection is available and fall back cleanly to system faces when
