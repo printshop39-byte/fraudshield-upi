@@ -1,0 +1,14 @@
+# Build output
+.artifact-build.html
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local tooling
+.claude/
+node_modules/
+*.log

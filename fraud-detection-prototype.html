@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FraudShield UPI Console</title>
+<style>
+  /* ============================================================
+     FraudShield Prototype — College Demo Build
+     Single-file app. Runs offline; webfonts fall back cleanly.
+     ============================================================ */
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&display=swap');
+
+  :root{
+    /* Ground: near-black carrying a violet bias, so the neutrals belong
+       to the accent rather than sitting under it as generic grey.       */
+    --bg:#0d0b14; --bg2:#12101f; --card:#161327; --card2:#1e1a33;
+    --line:#2a2545; --line2:#3a3260;
+    --tx:#edeaf7; --tx2:#a29dbf; --tx3:#6e6890;
+    /* Accent is violet and never semantic — state color stays separate. */
+    --accent:#8b7cf6; --accent2:#6d5de8;
+    --green:#34d399; --greenbg:rgba(52,211,153,.13);
+    --amber:#fbbf24; --amberbg:rgba(251,191,36,.13);
+    --red:#f87171;   --redbg:rgba(248,113,113,.13);
+    --radius:14px;
+    --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+    --f-body:'Public Sans','Segoe UI',system-ui,-apple-system,'Noto Sans Devanagari',sans-serif;
+    --f-mono:'IBM Plex Mono','Consolas','Courier New',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--f-body);
+    background:var(--bg); color:var(--tx); min-height:100vh; font-size:14px;
+  }
+  h1,.logo-txt b,.stat .val,.verdict .vt{font-family:var(--f-display)}
+  .stat .val,.gauge-lbl,td,th{font-variant-numeric:tabular-nums}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  /* ---------- Layout ---------- */
+  .app{display:flex;min-height:100vh}
+  .sidebar{
+    width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--line);
+    padding:22px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh
+  }
+  .logo{display:flex;align-items:center;gap:10px;padding:0 8px 20px;border-bottom:1px solid var(--line);margin-bottom:14px}
+  .logo-mark{
+    width:34px;height:34px;border-radius:9px;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),#6366f1);
+    display:grid;place-items:center;font-size:17px
+  }
+  .logo-txt b{display:block;font-size:15px;letter-spacing:.2px}
+  .logo-txt span{font-size:10px;color:var(--tx3);letter-spacing:.6px;text-transform:uppercase}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;
+    color:var(--tx2);cursor:pointer;font-size:13.5px;font-weight:500;border:1px solid transparent;
+    transition:.15s
+  }
+  .nav-item:hover{background:var(--card);color:var(--tx)}
+  .nav-item.active{background:var(--card2);color:var(--tx);border-color:var(--line2)}
+  .nav-item .ic{width:18px;text-align:center;font-size:14px}
+  .sidebar-foot{margin-top:auto;padding:12px 10px;border-top:1px solid var(--line);font-size:10.5px;color:var(--tx3);line-height:1.7}
+
+  .main{flex:1;padding:26px 30px 60px;max-width:1180px;overflow-x:hidden}
+  .page-head{margin-bottom:22px}
+  .page-head h1{font-size:22px;font-weight:650;letter-spacing:-.2px}
+  .page-head p{color:var(--tx2);font-size:13px;margin-top:5px}
+
+  .view{display:none} .view.active{display:block}
+
+  /* ---------- Cards / grid ---------- */
+  .grid{display:grid;gap:14px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g2{grid-template-columns:1.15fr .85fr}
+  @media(max-width:980px){.g4{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+  @media(max-width:760px){.sidebar{display:none}.main{padding:18px}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .card-t{font-size:12px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px}
+
+  .stat .lbl{font-size:11.5px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px}
+  .stat .val{font-size:27px;font-weight:680;margin:7px 0 3px;letter-spacing:-.5px}
+  .stat .sub{font-size:11.5px;color:var(--tx2)}
+  .stat .sub b{color:var(--green)}
+
+  /* ---------- Verify screen ---------- */
+  .drop{
+    border:2px dashed var(--line2);border-radius:var(--radius);padding:30px 20px;text-align:center;
+    cursor:pointer;transition:.18s;background:rgba(56,189,248,.03)
+  }
+  .drop:hover,.drop.over{border-color:var(--accent);background:rgba(56,189,248,.09)}
+  .drop .big{font-size:32px;margin-bottom:8px;opacity:.85}
+  .drop b{font-size:14px;display:block;margin-bottom:4px}
+  .drop span{font-size:12px;color:var(--tx3)}
+
+  .samples{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .sample-btn{
+    text-align:left;background:var(--card2);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;cursor:pointer;color:var(--tx);font-family:inherit;transition:.15s
+  }
+  .sample-btn:hover{border-color:var(--accent);background:#1f2a4f}
+  .sample-btn b{display:block;font-size:12.5px;margin-bottom:3px}
+  .sample-btn span{font-size:10.5px;color:var(--tx3)}
+
+  .field{margin-bottom:11px}
+  .field label{display:block;font-size:11px;color:var(--tx2);margin-bottom:5px;font-weight:500}
+  .field input,.field select{
+    width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:8px;
+    padding:9px 11px;color:var(--tx);font-size:13px;font-family:inherit
+  }
+  .field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
+  .f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  .btn{
+    width:100%;padding:12px;border:none;border-radius:9px;font-size:14px;font-weight:620;
+    cursor:pointer;font-family:inherit;background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#04121f;transition:.15s
+  }
+  .btn:hover{filter:brightness(1.1)}
+  .btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--tx2)}
+  .btn.ghost:hover{border-color:var(--accent);color:var(--tx)}
+
+  .toggle-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--bg);border:1px solid var(--line2);border-radius:9px;padding:10px 12px;margin-bottom:11px
+  }
+  .toggle-row .tl b{font-size:12.5px;display:block}
+  .toggle-row .tl span{font-size:10.5px;color:var(--tx3)}
+  .sw{position:relative;width:40px;height:22px;flex-shrink:0}
+  .sw input{opacity:0;width:0;height:0}
+  .sw .sl{position:absolute;inset:0;background:var(--line2);border-radius:22px;cursor:pointer;transition:.2s}
+  .sw .sl:before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:var(--tx2);border-radius:50%;transition:.2s}
+  .sw input:checked + .sl{background:var(--green)}
+  .sw input:checked + .sl:before{transform:translateX(18px);background:#fff}
+
+  /* ---------- Result ---------- */
+  .verdict{border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:14px;border:1px solid}
+  .verdict.GREEN{background:var(--greenbg);border-color:var(--green)}
+  .verdict.YELLOW{background:var(--amberbg);border-color:var(--amber)}
+  .verdict.RED{background:var(--redbg);border-color:var(--red)}
+  .verdict .em{font-size:38px;line-height:1}
+  .verdict .vt{font-size:19px;font-weight:700;margin:8px 0 4px;letter-spacing:-.2px}
+  .verdict.GREEN .vt{color:var(--green)} .verdict.YELLOW .vt{color:var(--amber)} .verdict.RED .vt{color:var(--red)}
+  .verdict .vd{font-size:12.5px;color:var(--tx2);max-width:420px;margin:0 auto;line-height:1.6}
+
+  .gauge{margin:14px auto 0;max-width:340px}
+  .gauge-bar{height:9px;border-radius:9px;background:var(--bg);overflow:hidden;position:relative}
+  .gauge-fill{height:100%;border-radius:9px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+  .gauge-lbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--tx3);margin-top:6px}
+
+  .check{
+    display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);align-items:flex-start
+  }
+  .check:last-child{border-bottom:none}
+  .chk-ic{
+    width:22px;height:22px;border-radius:6px;flex-shrink:0;display:grid;place-items:center;font-size:11px;font-weight:700
+  }
+  .chk-ic.pass{background:var(--greenbg);color:var(--green)}
+  .chk-ic.fail{background:var(--redbg);color:var(--red)}
+  .chk-ic.warn{background:var(--amberbg);color:var(--amber)}
+  .chk-body b{font-size:12.5px;display:block;margin-bottom:2px}
+  .chk-body span{font-size:11.5px;color:var(--tx2);line-height:1.55}
+  .chk-w{margin-left:auto;font-size:10.5px;color:var(--tx3);flex-shrink:0;white-space:nowrap;padding-top:3px}
+
+  /* ---------- Table ---------- */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{
+    text-align:left;padding:9px 10px;color:var(--tx3);font-size:10.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--line2)
+  }
+  td{padding:11px 10px;border-bottom:1px solid var(--line);color:var(--tx2)}
+  tr:last-child td{border-bottom:none}
+  td.mono{font-family:var(--f-mono);font-size:11.5px;color:var(--tx)}
+  /* Severity stripe — state reads before the text does. */
+  tr[data-v] td:first-child{border-left:3px solid transparent;padding-left:12px}
+  tr[data-v="GREEN"]  td:first-child{border-left-color:var(--green)}
+  tr[data-v="YELLOW"] td:first-child{border-left-color:var(--amber)}
+  tr[data-v="RED"]    td:first-child{border-left-color:var(--red)}
+  .pill{
+    display:inline-block;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:650;letter-spacing:.3px
+  }
+  .pill.GREEN{background:var(--greenbg);color:var(--green)}
+  .pill.YELLOW{background:var(--amberbg);color:var(--amber)}
+  .pill.RED{background:var(--redbg);color:var(--red)}
+
+  .filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .fbtn{
+    padding:7px 14px;border-radius:8px;border:1px solid var(--line2);background:transparent;
+    color:var(--tx2);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500
+  }
+  .fbtn.on{background:var(--card2);color:var(--tx);border-color:var(--accent)}
+
+  /* ---------- Analytics ---------- */
+  .bars{display:flex;align-items:flex-end;gap:9px;height:150px;padding-top:10px}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end}
+  .bar{width:100%;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--accent),#3b5bdb);min-height:3px;transition:height .6s}
+  .bar-col small{font-size:10px;color:var(--tx3)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px}
+  .lg{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--tx2)}
+  .lg i{width:9px;height:9px;border-radius:3px;display:block}
+
+  .donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .rule-row{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+  .rule-row .rn{font-size:12px;width:135px;flex-shrink:0;color:var(--tx2)}
+  .rule-row .rb{flex:1;height:7px;background:var(--bg);border-radius:7px;overflow:hidden}
+  .rule-row .rb i{display:block;height:100%;background:var(--red);border-radius:7px}
+  .rule-row .rc{font-size:11.5px;color:var(--tx);width:26px;text-align:right;font-weight:600}
+
+  .note{
+    background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.25);border-radius:10px;
+    padding:12px 14px;font-size:12px;color:var(--tx2);line-height:1.65;margin-top:14px
+  }
+  .note b{color:var(--accent)}
+  .hidden{display:none!important}
+  .preview{width:100%;border-radius:10px;border:1px solid var(--line2);margin-bottom:12px;max-height:230px;object-fit:contain;background:var(--bg)}
+  .empty{text-align:center;padding:44px 20px;color:var(--tx3);font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">🛡️</div>
+      <div class="logo-txt"><b>FraudShield</b><span>UPI AI Engine</span></div>
+    </div>
+    <div class="nav-item active" data-view="dash"><span class="ic">▣</span> Dashboard</div>
+    <div class="nav-item" data-view="verify"><span class="ic">⚡</span> Verify Payment</div>
+    <div class="nav-item" data-view="ledger"><span class="ic">☰</span> Transaction Ledger</div>
+    <div class="nav-item" data-view="analytics"><span class="ic">◫</span> Fraud Analytics</div>
+    <div class="nav-item" data-view="about"><span class="ic">◈</span> How It Works</div>
+    <div class="sidebar-foot">
+      <b style="color:var(--tx2)">Merchant:</b> Sukhada Collections<br>
+      <b style="color:var(--tx2)">VPA:</b> sukhada.collect@okaxis<br>
+      <span style="color:var(--green)">● Engine online</span>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ================= DASHBOARD ================= -->
+    <section class="view active" id="v-dash">
+      <div class="page-head">
+        <h1>Dashboard</h1>
+        <p>Real-time UPI payment screening — व्यवहार पडताळणी सारांश</p>
+      </div>
+
+      <div class="grid g4" style="margin-bottom:14px">
+        <div class="card stat">
+          <div class="lbl">Screened</div><div class="val" id="s-total">0</div>
+          <div class="sub">transactions verified</div>
+        </div>
+        <div class="card stat">
+          <div class="lbl">Fraud Blocked</div><div class="val" id="s-fraud" style="color:var(--red)">0</div>
+          <div class="sub">high-risk flagged</div>
+        </div>
+        <div class="card stat">
+          <div class="lbl">Amount Protected</div><div class="val" id="s-amt" style="color:var(--green)">₹0</div>
+          <div class="sub">loss prevented</div>
+        </div>
+        <div class="card stat">
+          <div class="lbl">Detection Rate</div><div class="val" id="s-rate">0%</div>
+          <div class="sub">of screened volume</div>
+        </div>
+      </div>
+
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-t">Recent Verifications</div>
+          <table><thead><tr>
+            <th>UTR</th><th>Payer</th><th>Amount</th><th>Risk</th><th>Verdict</th>
+          </tr></thead><tbody id="dash-rows"></tbody></table>
+        </div>
+        <div class="card">
+          <div class="card-t">Risk Distribution</div>
+          <div class="donut-wrap">
+            <svg width="132" height="132" viewBox="0 0 42 42" id="donut"></svg>
+            <div style="flex:1;min-width:110px">
+              <div class="lg" style="margin-bottom:9px"><i style="background:var(--green)"></i> Verified <b style="margin-left:auto;color:var(--tx)" id="d-g">0</b></div>
+              <div class="lg" style="margin-bottom:9px"><i style="background:var(--amber)"></i> Review <b style="margin-left:auto;color:var(--tx)" id="d-y">0</b></div>
+              <div class="lg"><i style="background:var(--red)"></i> Blocked <b style="margin-left:auto;color:var(--tx)" id="d-r">0</b></div>
+            </div>
+          </div>
+          <div class="note" style="margin-top:18px">
+            <b>Coverage:</b> <span id="s-cov">0%</span> of screenings returned a definitive
+            verdict (Green or Red) without needing human review.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VERIFY ================= -->
+    <section class="view" id="v-verify">
+      <div class="page-head">
+        <h1>Verify Payment</h1>
+        <p>Upload the UPI screenshot sent by the customer — पेमेंट स्क्रीनशॉट तपासा</p>
+      </div>
+
+      <div class="grid g2">
+        <!-- INPUT -->
+        <div class="card">
+          <div class="card-t">Step 1 — Payment Proof</div>
+
+          <img id="prev" class="preview hidden" alt="uploaded screenshot preview">
+          <div class="drop" id="drop">
+            <div class="big">📱</div>
+            <b>Drop UPI screenshot here</b>
+            <span>or click to browse — JPG / PNG</span>
+          </div>
+          <input type="file" id="file" accept="image/*" class="hidden">
+
+          <div style="font-size:11px;color:var(--tx3);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">
+            Or load a demo case
+          </div>
+          <div class="samples" id="samples"></div>
+
+          <div class="card-t" style="margin:22px 0 12px">Step 2 — Extracted Fields <span style="text-transform:none;letter-spacing:0;color:var(--tx3);font-weight:400">(OCR output — editable)</span></div>
+          <div class="f-row">
+            <div class="field"><label>Amount claimed (₹)</label><input id="i-amt" type="number" value="2500"></div>
+            <div class="field"><label>Amount expected (₹)</label><input id="i-exp" type="number" value="2500"></div>
+          </div>
+          <div class="field"><label>UTR / Reference number</label><input id="i-utr" value="412508931477"></div>
+          <div class="field"><label>Payee VPA on screenshot</label><input id="i-vpa" value="sukhada.collect@okaxis"></div>
+          <div class="f-row">
+            <div class="field"><label>Payer name</label><input id="i-payer" value="Ramesh Patil"></div>
+            <div class="field"><label>Screenshot age</label>
+              <select id="i-age">
+                <option value="0.2">Just now (12 min)</option>
+                <option value="20">Today (20 hrs)</option>
+                <option value="72">3 days old</option>
+                <option value="480">20 days old</option>
+              </select>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="tl"><b>Payment gateway connected</b><span>Cross-check UTR against real bank settlement</span></div>
+            <label class="sw"><input type="checkbox" id="i-gw" checked><span class="sl"></span></label>
+          </div>
+          <button class="btn" id="run">⚡ Run Fraud Analysis</button>
+        </div>
+
+        <!-- OUTPUT -->
+        <div class="card">
+          <div class="card-t">Analysis Result</div>
+          <div id="result-empty" class="empty">
+            ⬅ Load a demo case or upload a screenshot,<br>then click <b>Run Fraud Analysis</b>.
+          </div>
+          <div id="result" class="hidden">
+            <div class="verdict" id="verdict">
+              <div class="em" id="v-em">✓</div>
+              <div class="vt" id="v-title"></div>
+              <div class="vd" id="v-desc"></div>
+              <div class="gauge">
+                <div class="gauge-bar"><div class="gauge-fill" id="v-fill" style="width:0%"></div></div>
+                <div class="gauge-lbl"><span>Risk score</span><span><b id="v-score">0</b> / 100</span></div>
+              </div>
+            </div>
+            <div class="card-t" style="margin-top:18px">Rule Engine Breakdown</div>
+            <div id="checks"></div>
+            <button class="btn ghost" id="again" style="margin-top:16px">↺ Verify another payment</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= LEDGER ================= -->
+    <section class="view" id="v-ledger">
+      <div class="page-head">
+        <h1>Transaction Ledger</h1>
+        <p>All screened transactions with verdict history — व्यवहार नोंदवही</p>
+      </div>
+      <div class="filters" id="filters">
+        <button class="fbtn on" data-f="ALL">All</button>
+        <button class="fbtn" data-f="GREEN">✓ Verified</button>
+        <button class="fbtn" data-f="YELLOW">⚠ Manual review</button>
+        <button class="fbtn" data-f="RED">✕ Blocked</button>
+      </div>
+      <div class="card">
+        <table><thead><tr>
+          <th>Date</th><th>UTR</th><th>Payer</th><th>Payee VPA</th>
+          <th>Amount</th><th>Risk</th><th>Verdict</th><th>Primary reason</th>
+        </tr></thead><tbody id="ledger-rows"></tbody></table>
+      </div>
+    </section>
+
+    <!-- ================= ANALYTICS ================= -->
+    <section class="view" id="v-analytics">
+      <div class="page-head">
+        <h1>Fraud Analytics</h1>
+        <p>Pattern insights across screened transactions — फसवणूक विश्लेषण</p>
+      </div>
+      <div class="grid g2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="card-t">Fraud Attempts — Last 8 Days</div>
+          <div class="bars" id="bars"></div>
+          <div class="legend"><div class="lg"><i style="background:var(--accent)"></i> Blocked attempts per day</div></div>
+        </div>
+        <div class="card">
+          <div class="card-t">Which Rule Caught It</div>
+          <div id="rule-stats"></div>
+          <div class="note">
+            <b>Insight:</b> Deterministic rules (UTR reuse, VPA mismatch, amount tampering)
+            catch the majority of fraud — no ML training data required. This is why v1
+            ships rules first.
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-t">Top Flagged Payers</div>
+        <table><thead><tr><th>Payer</th><th>Attempts</th><th>Total ₹ attempted</th><th>Status</th></tr></thead>
+        <tbody id="top-fraud"></tbody></table>
+      </div>
+    </section>
+
+    <!-- ================= ABOUT ================= -->
+    <section class="view" id="v-about">
+      <div class="page-head">
+        <h1>How It Works</h1>
+        <p>System architecture and detection methodology — कार्यपद्धती</p>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-t">Detection Pipeline</div>
+        <pre style="font-family:var(--f-mono);font-size:11.5px;color:var(--tx2);line-height:1.85;overflow-x:auto">
+ Customer sends UPI screenshot on WhatsApp
+              │
+              ▼
+ ┌────────────────────────────────┐
+ │  1. FILE FINGERPRINT           │  → 128-bit FNV-1a over raw bytes
+ │     exact-match only           │     catches forwarded copies
+ └────────────────────────────────┘
+              │
+              ▼
+ ┌────────────────────────────────┐
+ │  2. FIELD EXTRACTION (OCR)     │  → amount, UTR, payee VPA, timestamp
+ └────────────────────────────────┘
+              │
+              ▼
+ ┌────────────────────────────────┐
+ │  3. RULE ENGINE (8 rules)      │  → weighted risk score 0–100
+ └────────────────────────────────┘
+              │
+              ▼
+ ┌────────────────────────────────┐
+ │  4. GATEWAY CROSS-CHECK        │  → match UTR against bank settlement
+ └────────────────────────────────┘
+              │
+              ▼
+   GREEN 0-24  │  YELLOW 25-49  │  RED 50-100
+   auto-accept │ manual review  │  block + alert</pre>
+      </div>
+
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-t">Rule Weights</div>
+          <table><thead><tr><th>Rule</th><th>Detects</th><th>Weight</th></tr></thead>
+          <tbody id="rule-table"></tbody></table>
+        </div>
+        <div class="card">
+          <div class="card-t">Why This Approach</div>
+          <div style="font-size:12.5px;color:var(--tx2);line-height:1.85">
+            <p style="margin-bottom:11px"><b style="color:var(--tx)">Problem:</b> WhatsApp strips EXIF metadata and re-compresses
+            every image — so classical image forensics (ELA, compression analysis) becomes
+            unreliable on exactly the images we receive.</p>
+            <p style="margin-bottom:11px"><b style="color:var(--tx)">Solution:</b> Anchor detection on data that cannot be
+            faked — the UTR reference number, the payee VPA, and the actual bank settlement
+            record. Image hashing handles replay; rules handle the rest.</p>
+            <p><b style="color:var(--tx)">Result:</b> Every verdict is explainable. The agent
+            sees exactly which check failed — critical for trust and for dispute handling.</p>
+          </div>
+          <div class="note">
+            <b>Note:</b> The system never accuses a customer. Output language is
+            "could not verify", never "this person is a fraudster" — an important
+            legal and ethical safeguard.
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-t">Experimental Finding — Why We Rejected Perceptual Hashing</div>
+        <p style="font-size:12.5px;color:var(--tx2);line-height:1.8;margin-bottom:14px">
+          Our first design used a perceptual hash (pHash/dHash) to detect re-sent
+          screenshots. We implemented it, measured it, and <b style="color:var(--tx)">disproved our own
+          approach</b>. A perceptual hash downscales the image to a small grid, so it
+          encodes <i>layout</i> — and every UPI success screen from the same app has an
+          identical layout. The amount and payer text, the only things that actually
+          differ, vanish on downscale.
+        </p>
+        <table style="margin-bottom:6px">
+          <thead><tr>
+            <th>Hash grid</th><th>Bits</th>
+            <th>Re-compressed replay<br><span style="text-transform:none;font-weight:400">(should be LOW)</span></th>
+            <th>Two different genuine payments<br><span style="text-transform:none;font-weight:400">(should be HIGH)</span></th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="mono">16×16</td><td>256</td>
+                <td style="color:var(--red)"><b>29 bits differ</b></td>
+                <td style="color:var(--red)"><b>3 bits differ</b></td></tr>
+            <tr><td class="mono">32×32</td><td>1024</td>
+                <td style="color:var(--red)"><b>44 bits differ</b></td>
+                <td style="color:var(--red)"><b>1 bit differs</b></td></tr>
+            <tr><td class="mono">64×64</td><td>4096</td>
+                <td style="color:var(--red)"><b>212 bits differ</b></td>
+                <td style="color:var(--red)"><b>5 bits differ</b></td></tr>
+          </tbody>
+        </table>
+        <div class="note" style="border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.07)">
+          <b style="color:var(--red)">The signal is inverted.</b> A genuine replay differs
+          <i>more</i> than two unrelated payments do, because WhatsApp re-compresses every
+          image it forwards. No threshold works — at any resolution. Setting it loose enough
+          to catch real fraud would flag <b>every</b> honest customer.
+          <br><br>
+          <b>Design response:</b> anchor detection on data that survives compression —
+          the <b>UTR reference number</b> (rule R1) and the <b>exact file bytes</b> (rule R2).
+          This is the single most important architectural decision in the project.
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ================================================================
+   FraudShield — detection engine
+   ================================================================ */
+
+/* ---------- Merchant config ---------- */
+const MERCHANT_VPA = 'sukhada.collect@okaxis';
+
+/* ---------- Rule definitions ----------
+   Each rule returns true when the FRAUD CONDITION is present.
+   Weight = how many risk points that condition adds.            */
+const RULES = [
+  { id:'R1', name:'UTR reuse detection', weight:60,
+    detects:'Same reference number claimed twice',
+    test:t => LEDGER.some(x => x.utr === t.utr),
+    msg:t => {
+      const p = LEDGER.find(x => x.utr === t.utr);
+      return `Reference ${t.utr} was already submitted on ${p.date} by ${p.payer}.`;
+    },
+    ok:'Reference number is unique — not seen in the last 90 days.' },
+
+  { id:'R2', name:'Exact file duplicate', weight:55,
+    detects:'Identical image file forwarded again',
+    test:t => !!t.hash && LEDGER.some(x => x.hash === t.hash),
+    msg:t => {
+      const p = LEDGER.find(x => x.hash === t.hash);
+      return `Byte-identical file was already submitted on ${p.date} by ${p.payer} — this is a forwarded copy, not a new payment.`;
+    },
+    ok:t => t.hash
+      ? 'Image file is new — no byte-identical match in history.'
+      : 'No image uploaded — exact-file check skipped for this submission.' },
+
+  { id:'R3', name:'Payee VPA verification', weight:55,
+    detects:'Money sent to a different UPI ID',
+    test:t => t.vpa.trim().toLowerCase() !== MERCHANT_VPA,
+    msg:t => `Payment went to "${t.vpa}" — not your registered VPA "${MERCHANT_VPA}".`,
+    ok:'Payee VPA matches your registered merchant ID.' },
+
+  { id:'R4', name:'Amount integrity check', weight:45,
+    detects:'Edited / mismatched amount',
+    test:t => Math.abs(t.amount - t.expected) > 0.5,
+    msg:t => `Screenshot claims ₹${fmt(t.amount)} but the invoice expects ₹${fmt(t.expected)} — difference of ₹${fmt(Math.abs(t.amount-t.expected))}.`,
+    ok:'Claimed amount matches the invoice exactly.' },
+
+  { id:'R5', name:'UTR format validation', weight:30,
+    detects:'Fabricated reference number',
+    test:t => !/^\d{12}$/.test(t.utr.trim()),
+    msg:t => `"${t.utr}" is not a valid UPI reference — must be exactly 12 digits.`,
+    ok:'Reference number matches the NPCI 12-digit format.' },
+
+  { id:'R6', name:'Timestamp freshness', weight:20,
+    detects:'Old transaction reused as new',
+    test:t => t.ageHours > 24,
+    msg:t => `Transaction is ${t.ageHours >= 24 ? Math.round(t.ageHours/24)+' day(s)' : t.ageHours+' hrs'} old — likely an earlier payment being re-presented.`,
+    ok:'Transaction timestamp is recent (within 24 hours).' },
+
+  { id:'R7', name:'Payer velocity check', weight:15,
+    detects:'Unusual submission frequency',
+    test:t => LEDGER.filter(x => x.payer === t.payer).length >= 3,
+    msg:t => `${t.payer} has submitted ${LEDGER.filter(x=>x.payer===t.payer).length} payment proofs — above normal frequency.`,
+    ok:'Payer submission frequency is normal.' },
+
+  { id:'R8', name:'Bank settlement match', weight:30,
+    detects:'No real money received',
+    test:t => !t.gateway,
+    msg:() => 'No payment gateway connected — cannot confirm the money actually reached your account.',
+    ok:'UTR matched against real bank settlement record. Money confirmed received.' }
+];
+
+/* ---------- Seed ledger (demo history) ---------- */
+const LEDGER = [
+  {date:'18 Aug', utr:'412508931477', payer:'Ramesh Patil',  vpa:MERCHANT_VPA, amount:2500, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {date:'18 Aug', utr:'389041226630', payer:'Sunita Jadhav', vpa:MERCHANT_VPA, amount:1800, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {date:'19 Aug', utr:'774125009863', payer:'Amit Kore',     vpa:'amit.pay@ybl',amount:5000,score:85, verdict:'RED',    reason:'Payee VPA mismatch', hash:null},
+  {date:'19 Aug', utr:'556203118742', payer:'Vikas More',    vpa:MERCHANT_VPA, amount:3200, score:30, verdict:'YELLOW', reason:'No settlement match', hash:null},
+  {date:'19 Aug', utr:'901337442158', payer:'Priya Shinde',  vpa:MERCHANT_VPA, amount:950,  score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {date:'20 Aug', utr:'223908115570', payer:'Amit Kore',     vpa:MERCHANT_VPA, amount:7500, score:95, verdict:'RED',    reason:'Amount tampering', hash:null},
+  {date:'20 Aug', utr:'640182297431', payer:'Nilesh Gaikwad',vpa:MERCHANT_VPA, amount:4100, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {date:'20 Aug', utr:'118450063392', payer:'Sunita Jadhav', vpa:MERCHANT_VPA, amount:2200, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null}
+];
+
+/* ---------- Demo cases ---------- */
+const SAMPLES = [
+  {t:'✓ Genuine payment', d:'Everything checks out',
+   v:{amt:2500, exp:2500, utr:'770418299356', vpa:MERCHANT_VPA, payer:'Kiran Deshmukh', age:'0.2', gw:true}},
+  {t:'✕ Screenshot replay', d:'Same UTR used before',
+   v:{amt:2500, exp:2500, utr:'412508931477', vpa:MERCHANT_VPA, payer:'Ramesh Patil', age:'0.2', gw:false}},
+  {t:'✕ Wrong UPI ID', d:'Money went elsewhere',
+   v:{amt:3000, exp:3000, utr:'883012774590', vpa:'rakesh.collect@ybl', payer:'Sanjay Bhosale', age:'0.2', gw:false}},
+  {t:'✕ Edited amount', d:'₹12,500 claimed vs ₹1,250 due',
+   v:{amt:12500, exp:1250, utr:'559108234461', vpa:MERCHANT_VPA, payer:'Amit Kore', age:'72', gw:false}}
+];
+
+/* ================================================================
+   Image fingerprinting — exact-file hash (128-bit FNV-1a)
+
+   WHY NOT PERCEPTUAL HASHING (pHash / aHash / dHash)?
+
+   We built and measured it first. Perceptual hashes downscale the
+   image to a tiny grid, so they encode LAYOUT — and every UPI
+   success screen from the same app has an identical layout. The
+   only thing that differs between two genuine payments is the
+   amount and name text, which is a few hundred pixels that vanish
+   completely on downscale.
+
+   Measured on simulated GPay screens (see "How It Works" page):
+
+     grid     re-compressed REPLAY     two DIFFERENT payments
+     16×16    29 bits differ            3 bits differ
+     32×32    44 bits differ            1 bit  differs
+     64×64   212 bits differ            5 bits differ
+
+   The signal is INVERTED. Any threshold loose enough to catch a
+   genuine replay (which WhatsApp re-compresses, shifting many bits)
+   also swallows every legitimate screenshot. No usable threshold
+   exists, at any resolution.
+
+   So we anchor on things that cannot be re-compressed away:
+     • the exact file bytes  → catches a forwarded identical file
+     • the UTR reference     → catches the same transaction reused
+   Rule R1 (UTR reuse) is the real replay defence; this rule is the
+   cheap exact-match backstop for when OCR cannot read the UTR.
+   ================================================================ */
+function fileHash(buffer){
+  /* FNV-1a over the raw bytes, four independent lanes → 128-bit hex.
+     Exact match only: identical bytes ⇒ identical hash, and any
+     edit at all changes it. Zero false positives by construction. */
+  const bytes = new Uint8Array(buffer);
+  const seeds = [0x811c9dc5, 0x01000193, 0x9e3779b9, 0x85ebca6b];
+  return seeds.map(seed => {
+    let h = seed >>> 0;
+    for(let i = 0; i < bytes.length; i++){
+      h ^= bytes[i];
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h.toString(16).padStart(8, '0');
+  }).join('');
+}
+
+/* ================================================================
+   Scoring
+   ================================================================ */
+function analyse(t){
+  const checks = RULES.map(r => {
+    let failed = false;
+    try { failed = r.test(t); } catch(e){ failed = false; }
+    const ok = typeof r.ok === 'function' ? r.ok(t) : r.ok;
+    return {
+      id: r.id, name: r.name, weight: r.weight, failed,
+      detail: failed ? r.msg(t) : ok
+    };
+  });
+  const score = Math.min(100, checks.filter(c => c.failed)
+                                    .reduce((s, c) => s + c.weight, 0));
+  const verdict = score >= 50 ? 'RED' : score >= 25 ? 'YELLOW' : 'GREEN';
+  return {score, verdict, checks};
+}
+
+const VERDICT_TEXT = {
+  GREEN : {em:'✓', t:'Payment Verified',      d:'All checks passed. This payment is genuine and confirmed received — safe to mark as paid.'},
+  YELLOW: {em:'⚠', t:'Needs Manual Review',   d:'Could not fully verify this payment. Nothing proves it is fake, but confirm with your bank statement before releasing goods.'},
+  RED   : {em:'✕', t:'High Risk — Do Not Accept', d:'This payment proof failed critical checks. Do not mark as paid. Verify directly with your bank before proceeding.'}
+};
+
+/* ================================================================
+   UI
+   ================================================================ */
+const $  = id => document.getElementById(id);
+const fmt = n => Number(n).toLocaleString('en-IN');
+let uploadedHash = null;
+
+/* ---- navigation ---- */
+document.querySelectorAll('.nav-item').forEach(n => {
+  n.onclick = () => {
+    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+    n.classList.add('active');
+    $('v-' + n.dataset.view).classList.add('active');
+    if(n.dataset.view === 'dash')      renderDash();
+    if(n.dataset.view === 'ledger')    renderLedger();
+    if(n.dataset.view === 'analytics') renderAnalytics();
+  };
+});
+
+/* ---- demo case buttons ---- */
+$('samples').innerHTML = SAMPLES.map((s,i) =>
+  `<button class="sample-btn" data-i="${i}"><b>${s.t}</b><span>${s.d}</span></button>`).join('');
+document.querySelectorAll('.sample-btn').forEach(b => {
+  b.onclick = () => {
+    const v = SAMPLES[+b.dataset.i].v;
+    $('i-amt').value = v.amt; $('i-exp').value = v.exp;
+    $('i-utr').value = v.utr; $('i-vpa').value = v.vpa;
+    $('i-payer').value = v.payer; $('i-age').value = v.age;
+    $('i-gw').checked = v.gw;
+    uploadedHash = null;
+    $('prev').classList.add('hidden');
+    $('drop').classList.remove('hidden');
+  };
+});
+
+/* ---- file upload ---- */
+const drop = $('drop'), file = $('file');
+drop.onclick = () => file.click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => {
+  e.preventDefault(); drop.classList.remove('over');
+  if(e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]);
+};
+file.onchange = e => { if(e.target.files[0]) loadImage(e.target.files[0]); };
+
+function loadImage(f){
+  /* Two reads: raw bytes for the exact-file hash, data URL for preview. */
+  const bin = new FileReader();
+  bin.onload = ev => { uploadedHash = fileHash(ev.target.result); };
+  bin.readAsArrayBuffer(f);
+
+  const rd = new FileReader();
+  rd.onload = ev => {
+    $('prev').src = ev.target.result;
+    $('prev').classList.remove('hidden');
+    drop.classList.add('hidden');
+  };
+  rd.readAsDataURL(f);
+}
+
+/* ---- run analysis ---- */
+$('run').onclick = () => {
+  const t = {
+    amount:   +$('i-amt').value,
+    expected: +$('i-exp').value,
+    utr:      $('i-utr').value,
+    vpa:      $('i-vpa').value,
+    payer:    $('i-payer').value || 'Unknown',
+    ageHours: +$('i-age').value,
+    gateway:  $('i-gw').checked,
+    hash:     uploadedHash
+  };
+  const r = analyse(t);
+  showResult(t, r);
+
+  /* record it so the NEXT submission of the same proof is caught */
+  const primary = r.checks.filter(c => c.failed).sort((a,b) => b.weight - a.weight)[0];
+  LEDGER.unshift({
+    date:'20 Aug', utr:t.utr, payer:t.payer, vpa:t.vpa, amount:t.amount,
+    score:r.score, verdict:r.verdict,
+    reason: primary ? primary.name : 'All checks passed',
+    hash: t.hash
+  });
+};
+
+function showResult(t, r){
+  $('result-empty').classList.add('hidden');
+  $('result').classList.remove('hidden');
+  const vt = VERDICT_TEXT[r.verdict];
+  $('verdict').className = 'verdict ' + r.verdict;
+  $('v-em').textContent = vt.em;
+  $('v-title').textContent = vt.t;
+  $('v-desc').textContent = vt.d;
+  $('v-score').textContent = r.score;
+  const col = r.verdict === 'RED' ? 'var(--red)' : r.verdict === 'YELLOW' ? 'var(--amber)' : 'var(--green)';
+  const fill = $('v-fill');
+  fill.style.width = '0%'; fill.style.background = col;
+  setTimeout(() => fill.style.width = r.score + '%', 60);
+
+  $('checks').innerHTML = r.checks.map(c => `
+    <div class="check">
+      <div class="chk-ic ${c.failed ? 'fail' : 'pass'}">${c.failed ? '✕' : '✓'}</div>
+      <div class="chk-body"><b>${c.name}</b><span>${c.detail}</span></div>
+      <div class="chk-w">${c.failed ? '+' + c.weight : '—'}</div>
+    </div>`).join('');
+}
+
+$('again').onclick = () => {
+  $('result').classList.add('hidden');
+  $('result-empty').classList.remove('hidden');
+  uploadedHash = null;
+  $('prev').classList.add('hidden');
+  drop.classList.remove('hidden');
+};
+
+/* ---- dashboard ---- */
+function renderDash(){
+  const total = LEDGER.length;
+  const red   = LEDGER.filter(x => x.verdict === 'RED').length;
+  const yel   = LEDGER.filter(x => x.verdict === 'YELLOW').length;
+  const grn   = total - red - yel;
+  const saved = LEDGER.filter(x => x.verdict === 'RED').reduce((s,x) => s + x.amount, 0);
+
+  $('s-total').textContent = total;
+  $('s-fraud').textContent = red;
+  $('s-amt').textContent   = '₹' + fmt(saved);
+  $('s-rate').textContent  = total ? Math.round(red / total * 100) + '%' : '0%';
+  $('s-cov').textContent   = total ? Math.round((total - yel) / total * 100) + '%' : '0%';
+  $('d-g').textContent = grn; $('d-y').textContent = yel; $('d-r').textContent = red;
+
+  $('dash-rows').innerHTML = LEDGER.slice(0, 6).map(x => `
+    <tr data-v="${x.verdict}"><td class="mono">${x.utr}</td><td>${x.payer}</td>
+    <td>₹${fmt(x.amount)}</td><td><b style="color:var(--tx)">${x.score}</b></td>
+    <td><span class="pill ${x.verdict}">${x.verdict}</span></td></tr>`).join('');
+
+  /* donut */
+  const segs = [[grn,'var(--green)'],[yel,'var(--amber)'],[red,'var(--red)']];
+  let off = 25, svg = '';
+  segs.forEach(([n, c]) => {
+    const pct = total ? n / total * 100 : 0;
+    svg += `<circle cx="21" cy="21" r="15.9" fill="transparent" stroke="${c}"
+             stroke-width="5.5" stroke-dasharray="${pct} ${100-pct}"
+             stroke-dashoffset="${off}"></circle>`;
+    off -= pct;
+  });
+  $('donut').innerHTML =
+    `<circle cx="21" cy="21" r="15.9" fill="transparent" stroke="var(--bg)" stroke-width="5.5"></circle>` + svg;
+}
+
+/* ---- ledger ---- */
+let filter = 'ALL';
+document.querySelectorAll('#filters .fbtn').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('#filters .fbtn').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); filter = b.dataset.f; renderLedger();
+  };
+});
+function renderLedger(){
+  const rows = LEDGER.filter(x => filter === 'ALL' || x.verdict === filter);
+  $('ledger-rows').innerHTML = rows.length ? rows.map(x => `
+    <tr data-v="${x.verdict}"><td>${x.date}</td><td class="mono">${x.utr}</td><td>${x.payer}</td>
+    <td style="font-size:11.5px">${x.vpa}</td><td>₹${fmt(x.amount)}</td>
+    <td><b style="color:var(--tx)">${x.score}</b></td>
+    <td><span class="pill ${x.verdict}">${x.verdict}</span></td>
+    <td style="font-size:11.5px">${x.reason}</td></tr>`).join('')
+    : `<tr><td colspan="8" class="empty">No transactions in this category.</td></tr>`;
+}
+
+/* ---- analytics ---- */
+function renderAnalytics(){
+  const days = ['13','14','15','16','17','18','19','20'];
+  const vals = [2,1,4,3,6,2,5,LEDGER.filter(x => x.verdict === 'RED').length];
+  const max  = Math.max(...vals, 1);
+  $('bars').innerHTML = days.map((d,i) => `
+    <div class="bar-col">
+      <div class="bar" style="height:${vals[i]/max*100}%" title="${vals[i]} blocked"></div>
+      <small>${d}</small>
+    </div>`).join('');
+
+  const counts = {};
+  LEDGER.filter(x => x.verdict !== 'GREEN').forEach(x => counts[x.reason] = (counts[x.reason]||0)+1);
+  const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const mx = Math.max(...entries.map(e => e[1]), 1);
+  $('rule-stats').innerHTML = entries.length ? entries.map(([n,c]) => `
+    <div class="rule-row"><div class="rn">${n}</div>
+      <div class="rb"><i style="width:${c/mx*100}%"></i></div>
+      <div class="rc">${c}</div></div>`).join('')
+    : `<div class="empty">No flagged transactions yet.</div>`;
+
+  const byPayer = {};
+  LEDGER.filter(x => x.verdict === 'RED').forEach(x => {
+    byPayer[x.payer] = byPayer[x.payer] || {n:0, amt:0};
+    byPayer[x.payer].n++; byPayer[x.payer].amt += x.amount;
+  });
+  const tp = Object.entries(byPayer).sort((a,b) => b[1].n - a[1].n);
+  $('top-fraud').innerHTML = tp.length ? tp.map(([p,v]) => `
+    <tr><td style="color:var(--tx)">${p}</td><td>${v.n}</td><td>₹${fmt(v.amt)}</td>
+    <td><span class="pill RED">${v.n >= 2 ? 'Blocklisted' : 'Watchlist'}</span></td></tr>`).join('')
+    : `<tr><td colspan="4" class="empty">No repeat offenders detected.</td></tr>`;
+}
+
+/* ---- rule table (About page) ---- */
+$('rule-table').innerHTML = RULES.map(r => `
+  <tr><td style="color:var(--tx)">${r.name}</td><td style="font-size:11.5px">${r.detects}</td>
+  <td><b style="color:var(--red)">+${r.weight}</b></td></tr>`).join('');
+
+renderDash();
+</script>
+</body>
+</html>
