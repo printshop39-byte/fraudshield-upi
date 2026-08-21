@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FraudShield UPI Console</title>
-<meta name="description" content="Explainable fraud screening for UPI payment screenshots — eight weighted rules produce an auditable risk verdict in under a second, entirely in your browser.">
+<meta name="description" content="Explainable fraud screening for UPI payment screenshots — nine weighted rules produce an auditable risk verdict in under a second, entirely in your browser.">
 <meta name="theme-color" content="#0d0b14">
 <link rel="canonical" href="https://printshop39-byte.github.io/fraudshield-upi/">
 <!-- Inline SVG favicon: no extra request, works offline. -->
@@ -149,6 +149,8 @@
   }
   .field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
   .field input.invalid,.field select.invalid{border-color:var(--red)}
+  /* Auto-read values are marked, not trusted — the operator should check them. */
+  .field input.autofilled{border-color:var(--accent);background:rgba(139,124,246,.07)}
   .field .hint{display:block;font-size:10.5px;color:var(--tx3);margin-top:4px}
   .f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .form-error{
@@ -397,14 +399,19 @@
           <div class="field"><label for="i-vpa">Payee VPA on screenshot</label><input id="i-vpa" value="sukhada.collect@okaxis"></div>
           <div class="f-row">
             <div class="field"><label for="i-payer">Payer name</label><input id="i-payer" value="Ramesh Patil"></div>
-            <div class="field"><label for="i-age">Screenshot age</label>
-              <select id="i-age">
-                <option value="0.2">Just now (12 min)</option>
-                <option value="20">Today (20 hrs)</option>
-                <option value="72">3 days old</option>
-                <option value="480">20 days old</option>
-              </select>
+            <div class="field"><label for="i-mobile">Payer mobile</label>
+              <input id="i-mobile" inputmode="numeric" maxlength="10" placeholder="10 digits">
+              <small class="hint">Known numbers fill in the payer automatically</small>
             </div>
+          </div>
+          <div id="payer-note" class="form-note hidden"></div>
+          <div class="field"><label for="i-age">Screenshot age</label>
+            <select id="i-age">
+              <option value="0.2">Just now (12 min)</option>
+              <option value="20">Today (20 hrs)</option>
+              <option value="72">3 days old</option>
+              <option value="480">20 days old</option>
+            </select>
           </div>
           <div class="toggle-row">
             <div class="tl"><b>Payment gateway connected</b><span>Cross-check UTR against real bank settlement</span></div>
@@ -508,12 +515,12 @@
               │
               ▼
  ┌────────────────────────────────┐
- │  2. FIELD EXTRACTION (OCR)     │  → amount, UTR, payee VPA, timestamp
+ │  2. FIELD EXTRACTION (OCR)     │  → amount, UTR, payee VPA, mobile
  └────────────────────────────────┘
               │
               ▼
  ┌────────────────────────────────┐
- │  3. RULE ENGINE (8 rules)      │  → weighted risk score 0–100
+ │  3. RULE ENGINE (9 rules)      │  → weighted risk score 0–100
  └────────────────────────────────┘
               │
               ▼
@@ -654,9 +661,28 @@ const RULES = [
 
   { id:'R7', name:'Payer velocity check', weight:15,
     detects:'Unusual submission frequency',
-    test:t => LEDGER.filter(x => x.payer === t.payer).length >= 3,
-    msg:t => `${t.payer} has submitted ${LEDGER.filter(x=>x.payer===t.payer).length} payment proofs — above normal frequency.`,
+    /* Keyed on the mobile number when given — a phone number is a far
+       harder identity to vary than a typed name. */
+    test:t => payerClaims(t) >= 3,
+    msg:t => `This payer has submitted ${payerClaims(t)} payment proofs — above normal frequency.`,
     ok:'Payer submission frequency is normal.' },
+
+  { id:'R9', name:'Payer identity consistency', weight:40,
+    detects:'Mobile number reused under a different name',
+    test:t => {
+      const h = payerHistory(t.mobile);
+      return !!h && !!t.payer && h.payer.toLowerCase() !== t.payer.toLowerCase();
+    },
+    msg:t => {
+      const h = payerHistory(t.mobile);
+      return `Mobile ${t.mobile} was previously used by "${h.payer}", not "${t.payer}". The same number paying under a different name is a common mule-account pattern.`;
+    },
+    ok:t => {
+      if(!t.mobile) return 'No mobile number given — payer identity check skipped.';
+      const h = payerHistory(t.mobile);
+      return h ? `Mobile matches a known payer ("${h.payer}") from ${h.date}.`
+               : 'First payment from this mobile number — nothing to contradict.';
+    } },
 
   { id:'R8', name:'Bank settlement match', weight:30,
     detects:'No real money received',
@@ -667,26 +693,42 @@ const RULES = [
 
 /* ---------- Seed ledger (demo history) ---------- */
 const LEDGER = [
-  {date:'18 Aug', utr:'412508931477', payer:'Ramesh Patil',  vpa:MERCHANT_VPA, amount:2500, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
-  {date:'18 Aug', utr:'389041226630', payer:'Sunita Jadhav', vpa:MERCHANT_VPA, amount:1800, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
-  {date:'19 Aug', utr:'774125009863', payer:'Amit Kore',     vpa:'amit.pay@ybl',amount:5000,score:85, verdict:'RED',    reason:'Payee VPA mismatch', hash:null},
-  {date:'19 Aug', utr:'556203118742', payer:'Vikas More',    vpa:MERCHANT_VPA, amount:3200, score:30, verdict:'YELLOW', reason:'No settlement match', hash:null},
-  {date:'19 Aug', utr:'901337442158', payer:'Priya Shinde',  vpa:MERCHANT_VPA, amount:950,  score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
-  {date:'20 Aug', utr:'223908115570', payer:'Amit Kore',     vpa:MERCHANT_VPA, amount:7500, score:95, verdict:'RED',    reason:'Amount tampering', hash:null},
-  {date:'20 Aug', utr:'640182297431', payer:'Nilesh Gaikwad',vpa:MERCHANT_VPA, amount:4100, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
-  {date:'20 Aug', utr:'118450063392', payer:'Sunita Jadhav', vpa:MERCHANT_VPA, amount:2200, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null}
+  {date:'18 Aug', utr:'412508931477', payer:'Ramesh Patil',  mobile:'9822014577', vpa:MERCHANT_VPA, amount:2500, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {date:'18 Aug', utr:'389041226630', payer:'Sunita Jadhav', mobile:'9730558812', vpa:MERCHANT_VPA, amount:1800, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {date:'19 Aug', utr:'774125009863', payer:'Amit Kore',     mobile:'9146770231', vpa:'amit.pay@ybl',amount:5000,score:85, verdict:'RED',    reason:'Payee VPA mismatch', hash:null},
+  {date:'19 Aug', utr:'556203118742', payer:'Vikas More',    mobile:'9028441963', vpa:MERCHANT_VPA, amount:3200, score:30, verdict:'YELLOW', reason:'No settlement match', hash:null},
+  {date:'19 Aug', utr:'901337442158', payer:'Priya Shinde',  mobile:'8956120744', vpa:MERCHANT_VPA, amount:950,  score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {date:'20 Aug', utr:'223908115570', payer:'Amit Kore',     mobile:'9146770231', vpa:MERCHANT_VPA, amount:7500, score:95, verdict:'RED',    reason:'Amount tampering', hash:null},
+  {date:'20 Aug', utr:'640182297431', payer:'Nilesh Gaikwad',mobile:'7887332905', vpa:MERCHANT_VPA, amount:4100, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {date:'20 Aug', utr:'118450063392', payer:'Sunita Jadhav', mobile:'9730558812', vpa:MERCHANT_VPA, amount:2200, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null}
 ];
+
+/* Most recent ledger entry for a payer mobile number, if any. */
+function payerHistory(mobile){
+  if(!/^[6-9]\d{9}$/.test(mobile || '')) return null;
+  return LEDGER.find(x => x.mobile === mobile) || null;
+}
+/* How many claims this payer has filed — by mobile when we have one. */
+function payerClaims(t){
+  return t.mobile
+    ? LEDGER.filter(x => x.mobile === t.mobile).length
+    : LEDGER.filter(x => x.payer === t.payer).length;
+}
 
 /* ---------- Demo cases ---------- */
 const SAMPLES = [
   {t:'✓ Genuine payment', d:'Everything checks out',
-   v:{amt:2500, exp:2500, utr:'770418299356', vpa:MERCHANT_VPA, payer:'Kiran Deshmukh', age:'0.2', gw:true}},
+   v:{amt:2500, exp:2500, utr:'770418299356', vpa:MERCHANT_VPA, payer:'Kiran Deshmukh', mobile:'9673410288', age:'0.2', gw:true}},
   {t:'✕ Screenshot replay', d:'Same UTR used before',
-   v:{amt:2500, exp:2500, utr:'412508931477', vpa:MERCHANT_VPA, payer:'Ramesh Patil', age:'0.2', gw:false}},
+   v:{amt:2500, exp:2500, utr:'412508931477', vpa:MERCHANT_VPA, payer:'Ramesh Patil', mobile:'9822014577', age:'0.2', gw:false}},
   {t:'✕ Wrong UPI ID', d:'Money went elsewhere',
-   v:{amt:3000, exp:3000, utr:'883012774590', vpa:'rakesh.collect@ybl', payer:'Sanjay Bhosale', age:'0.2', gw:false}},
+   v:{amt:3000, exp:3000, utr:'883012774590', vpa:'rakesh.collect@ybl', payer:'Sanjay Bhosale', mobile:'9011256630', age:'0.2', gw:false}},
   {t:'✕ Edited amount', d:'₹12,500 claimed vs ₹1,250 due',
-   v:{amt:12500, exp:1250, utr:'559108234461', vpa:MERCHANT_VPA, payer:'Amit Kore', age:'72', gw:false}}
+   v:{amt:12500, exp:1250, utr:'559108234461', vpa:MERCHANT_VPA, payer:'Amit Kore', mobile:'9146770231', age:'72', gw:false}},
+  {t:'✕ Payer identity mismatch', d:'Known number, new name',
+   v:{amt:2000, exp:2000, utr:'660192883047', vpa:MERCHANT_VPA, payer:'Rahul Salunkhe', mobile:'9822014577', age:'0.2', gw:false}},
+  {t:'✓ First-time payer', d:'Unknown number, all clean',
+   v:{amt:1500, exp:1500, utr:'490273116628', vpa:MERCHANT_VPA, payer:'Manisha Pawar', mobile:'8767445190', age:'0.2', gw:true}}
 ];
 
 /* ================================================================
@@ -809,9 +851,12 @@ document.querySelectorAll('.sample-btn').forEach(b => {
     $('i-amt').value = v.amt; $('i-exp').value = v.exp;
     $('i-utr').value = v.utr; $('i-vpa').value = v.vpa;
     $('i-payer').value = v.payer; $('i-age').value = v.age;
+    $('i-mobile').value = v.mobile || '';
     $('i-gw').checked = v.gw;
     uploadedHash = null;
     clearFormError();
+    document.querySelectorAll('.field .autofilled').forEach(e => e.classList.remove('autofilled'));
+    onMobileEntered();
     $('upload-note').classList.add('hidden');
     $('prev').classList.add('hidden');
     $('drop').classList.remove('hidden');
@@ -856,8 +901,128 @@ function loadImage(f){
     $('prev').classList.remove('hidden');
     drop.classList.add('hidden');
     clearFieldsForUpload();
+    runOCR(blob);
   };
   rd.readAsArrayBuffer(f);
+}
+
+/* ================================================================
+   OCR — best-effort, never required
+
+   Tesseract.js is fetched from a CDN only when an image is actually
+   uploaded, so the page still loads in one request and still works
+   with no network. If the library fails to load, times out, or reads
+   nothing usable, the form simply stays in manual-entry mode — the
+   operator is never blocked, and every auto-filled value is marked
+   for checking rather than trusted.
+   ================================================================ */
+const OCR_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+const OCR_TIMEOUT = 30000;
+let ocrLoader = null;
+
+function loadOCR(){
+  if(window.Tesseract) return Promise.resolve(window.Tesseract);
+  if(ocrLoader) return ocrLoader;
+  ocrLoader = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = OCR_SRC;
+    s.onload  = () => window.Tesseract ? resolve(window.Tesseract) : reject(new Error('loaded but absent'));
+    s.onerror = () => reject(new Error('script blocked or offline'));
+    document.head.appendChild(s);
+  });
+  return ocrLoader;
+}
+
+/* Pull the fields we care about out of raw OCR text. */
+function parseUPIText(txt){
+  const flat = txt.replace(/\s+/g, ' ');
+  const out = {};
+
+  const amt = flat.match(/(?:₹|Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)/i);
+  if(amt) out.amount = amt[1].replace(/,/g, '');
+
+  const utr = flat.match(/\b(\d{12})\b/);            // NPCI reference length
+  if(utr) out.utr = utr[1];
+
+  /* Walk every handle, not just the first — a screenshot often carries a
+     support email before the payee VPA, and stopping at the first match
+     would return the email or nothing. */
+  const handles = flat.match(/\b[a-zA-Z0-9][a-zA-Z0-9._-]+@[a-zA-Z][a-zA-Z.]*[a-zA-Z]\b/g) || [];
+  const vpa = handles.find(h => !/\.(com|in|org|net|co)$/i.test(h)
+                             && !/@(gmail|yahoo|outlook|hotmail|rediffmail)\b/i.test(h));
+  if(vpa) out.vpa = vpa;
+
+  /* UPI apps group phone numbers — "+91 98220 14577", "98-220-14577" — so
+     join digit runs split only by a space or hyphen, then accept a run
+     ONLY if the whole run is a mobile number. Matching loosely inside a
+     longer run would carve a fake mobile out of a 12-digit reference:
+     889201447366 would yield 9201447366. Exact 10-digit runs win; a
+     91-prefixed run is the fallback, and the reference is excluded. */
+  const runs = (flat.replace(/(\d)[\s-]+(?=\d)/g, '$1').match(/\d+/g) || [])
+                 .filter(r => r !== out.utr);
+  out.mobile = runs.find(r => /^[6-9]\d{9}$/.test(r))
+            || (runs.map(r => (/^(?:0|91)([6-9]\d{9})$/.exec(r) || [])[1]).find(Boolean));
+  if(!out.mobile) delete out.mobile;
+
+  /* Payer name: "To Rikhba Vihaparasar", "Paid to SUKHADA COLLECTIONS".
+     Requires a capitalised word so "To sukhada.collect@okaxis" is not
+     mistaken for a name. */
+  const nm = flat.match(/\b(?:To|Paid to|Sent to|From)\s+([A-Z][A-Za-z.]*(?:\s+[A-Z][A-Za-z.]*){0,3})/);
+  if(nm && !nm[1].includes('@')) out.payer = nm[1].trim();
+
+  return out;
+}
+
+async function runOCR(blob){
+  const note = $('upload-note');
+  const setNote = (title, body) => {
+    note.innerHTML = `<b>${esc(title)}</b>${esc(body)}`;
+    note.classList.remove('hidden');
+  };
+  setNote('Reading the screenshot…',
+          'Trying to pull the amount, reference number and UPI ID out of the image. You can start typing them yourself instead — this never blocks you.');
+
+  let worker;
+  try{
+    const T = await Promise.race([
+      loadOCR(),
+      new Promise((_, r) => setTimeout(() => r(new Error('timeout')), OCR_TIMEOUT))
+    ]);
+    worker = await T.createWorker('eng');
+    const { data:{ text } } = await Promise.race([
+      worker.recognize(blob),
+      new Promise((_, r) => setTimeout(() => r(new Error('timeout')), OCR_TIMEOUT))
+    ]);
+    const got = parseUPIText(text || '');
+
+    const filled = [];
+    if(got.amount){ $('i-amt').value = got.amount; $('i-exp').value = got.amount; filled.push('amount'); markAuto('i-amt'); markAuto('i-exp'); }
+    if(got.utr)   { $('i-utr').value = got.utr;       filled.push('reference number'); markAuto('i-utr'); }
+    if(got.vpa)   { $('i-vpa').value = got.vpa;       filled.push('payee UPI ID');     markAuto('i-vpa'); }
+    /* Name from the image before the mobile lookup runs, so R9 compares
+       what the proof claims against what history knows. */
+    if(got.payer) { $('i-payer').value = got.payer;   filled.push('payer name');       markAuto('i-payer'); }
+    if(got.mobile){ $('i-mobile').value = got.mobile; filled.push('mobile number');    markAuto('i-mobile'); onMobileEntered(); }
+
+    if(filled.length){
+      setNote(`Auto-read ${filled.join(', ')} — please check against the image.`,
+              'OCR is approximate. Correct anything that looks wrong before running the analysis, and fill in whatever it could not find.');
+    }else{
+      setNote('Could not read the screenshot — enter the details yourself.',
+              'The image may be low resolution or compressed. Type the amount, reference number and payee UPI ID exactly as they appear.');
+    }
+  }catch(err){
+    setNote('Automatic reading unavailable — enter the details yourself.',
+            'This needs an internet connection the first time. Type the amount, reference number and payee UPI ID exactly as they appear in your screenshot.');
+  }finally{
+    if(worker){ try{ await worker.terminate(); }catch(e){} }
+  }
+}
+
+function markAuto(id){
+  const el = $(id);
+  el.classList.add('autofilled');
+  el.addEventListener('input', () => el.classList.remove('autofilled'), {once:true});
 }
 
 /* A real screenshot must never be scored against leftover demo values.
@@ -865,13 +1030,51 @@ function loadImage(f){
    genuine payment as a duplicate — the fields are cleared instead and
    the operator is asked to read the real ones off the image. */
 function clearFieldsForUpload(){
-  ['i-amt','i-exp','i-utr','i-vpa','i-payer'].forEach(id => $(id).value = '');
+  ['i-amt','i-exp','i-utr','i-vpa','i-payer','i-mobile'].forEach(id => {
+    $(id).value = ''; $(id).classList.remove('autofilled');
+  });
   $('i-age').value = '0.2';
+  $('payer-note').classList.add('hidden');
   $('upload-note').classList.remove('hidden');
   $('result').classList.add('hidden');
   $('result-empty').classList.remove('hidden');
   $('i-amt').focus();
 }
+
+/* ---- payer lookup by mobile ----
+   A mobile number cannot be resolved against bank or NPCI records from a
+   browser — no such public API exists. What it can do is key this
+   merchant's own history, filling in a payer they have dealt with before
+   and letting rule R9 flag the number turning up under a new name. */
+function onMobileEntered(){
+  const m    = $('i-mobile').value.trim();
+  const note = $('payer-note');
+  if(!/^[6-9]\d{9}$/.test(m)){ note.classList.add('hidden'); return; }
+
+  const h = payerHistory(m);
+  if(!h){
+    note.innerHTML = '<b>First-time payer.</b>No earlier payment from this number, so there is no history to check it against.';
+    note.classList.remove('hidden');
+    return;
+  }
+  /* Never fill the payer name from history while a screenshot is loaded.
+     Rule R9 exists to compare the name on the proof against the name this
+     number used before — filling it in from that same history would make
+     the comparison always agree and silently disable the rule. */
+  const fromScreenshot = !!uploadedHash;
+  let filled = false;
+  if(!fromScreenshot && !$('i-payer').value.trim()){
+    $('i-payer').value = h.payer; markAuto('i-payer'); filled = true;
+  }
+  note.innerHTML = `<b>Known payer — ${esc(h.payer)}</b>`
+    + `Last seen ${esc(h.date)}, ₹${fmt(h.amount)}, verdict ${esc(h.verdict)}.`
+    + (filled ? ' Payer name filled in from history.'
+              : fromScreenshot ? ' Enter the name shown on your screenshot so it can be checked against this.'
+                               : '');
+  note.classList.remove('hidden');
+}
+$('i-mobile').addEventListener('input', onMobileEntered);
+$('i-mobile').addEventListener('blur',  onMobileEntered);
 
 /* ---- validation ---- */
 function showFormError(msg){
@@ -912,6 +1115,7 @@ $('run').onclick = () => {
     utr:      $('i-utr').value.trim(),
     vpa:      $('i-vpa').value.trim(),
     payer:    $('i-payer').value.trim() || 'Unknown',
+    mobile:   $('i-mobile').value.trim(),
     ageHours: +$('i-age').value,
     gateway:  $('i-gw').checked,
     hash:     uploadedHash
@@ -922,7 +1126,7 @@ $('run').onclick = () => {
   /* record it so the NEXT submission of the same proof is caught */
   const primary = r.checks.filter(c => c.failed).sort((a,b) => b.weight - a.weight)[0];
   LEDGER.unshift({
-    date:'20 Aug', utr:t.utr, payer:t.payer, vpa:t.vpa, amount:t.amount,
+    date:'20 Aug', utr:t.utr, payer:t.payer, mobile:t.mobile, vpa:t.vpa, amount:t.amount,
     score:r.score, verdict:r.verdict,
     reason: primary ? primary.name : 'All checks passed',
     hash: t.hash
@@ -958,6 +1162,8 @@ $('again').onclick = () => {
   uploadedHash = null;
   clearFormError();
   $('upload-note').classList.add('hidden');
+  $('payer-note').classList.add('hidden');
+  document.querySelectorAll('.field .autofilled').forEach(e => e.classList.remove('autofilled'));
   $('prev').classList.add('hidden');
   drop.classList.remove('hidden');
   $('i-utr').focus();
