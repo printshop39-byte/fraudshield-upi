@@ -31,7 +31,7 @@
      FraudShield Prototype — College Demo Build
      Single-file app. Runs offline; webfonts fall back cleanly.
      ============================================================ */
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&display=swap');
 
   :root{
     /* Deep Trust Slate ground with a cyan/indigo accent pair. */
@@ -44,8 +44,8 @@
     --amber:#f59e0b; --amberbg:rgba(245,158,11,.13);
     --red:#ef4444;   --redbg:rgba(239,68,68,.13);
     --radius:14px;
-    --f-display:'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif;
-    --f-body:'Plus Jakarta Sans','Segoe UI',system-ui,-apple-system,'Noto Sans Devanagari',sans-serif;
+    --f-display:'Poppins','Noto Sans Devanagari','Segoe UI',system-ui,sans-serif;
+    --f-body:'Poppins','Noto Sans Devanagari','Segoe UI',system-ui,-apple-system,sans-serif;
     --f-mono:'IBM Plex Mono','Consolas','Courier New',monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -339,6 +339,96 @@
   .kv .k{width:132px;flex-shrink:0;color:var(--tx3)}
   .kv .v{color:var(--tx);font-family:var(--f-mono);font-size:11.5px;word-break:break-all}
 
+  /* ---------- Golden-rule pill + language switcher ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;
+    background:linear-gradient(90deg,rgba(245,158,11,.16),rgba(245,158,11,.06));
+    border:1px solid rgba(245,158,11,.4);border-radius:999px;
+    padding:9px 10px 9px 16px;margin-bottom:20px;backdrop-filter:blur(8px)
+  }
+  .topbar .rule{
+    flex:1;font-size:12.5px;line-height:1.5;color:var(--tx);font-weight:500;min-width:0
+  }
+  .topbar .rule b{color:var(--amber)}
+  .lang{display:flex;gap:2px;background:var(--bg);border:1px solid var(--line2);border-radius:999px;padding:3px;flex-shrink:0}
+  .lang button{
+    border:none;background:transparent;color:var(--tx2);font-family:inherit;font-size:11.5px;
+    font-weight:600;padding:7px 13px;border-radius:999px;cursor:pointer;min-height:34px;white-space:nowrap
+  }
+  .lang button.on{background:var(--accent);color:#04121f}
+
+  /* ---------- Checklist / SOS / quiz ---------- */
+  .sos-call{
+    display:flex;align-items:center;gap:14px;text-decoration:none;
+    background:linear-gradient(135deg,rgba(239,68,68,.22),rgba(239,68,68,.08));
+    border:1px solid var(--red);border-radius:var(--radius);padding:18px;margin-bottom:16px;
+    transition:.15s
+  }
+  .sos-call:hover{filter:brightness(1.15)}
+  .sos-call .num{font-family:var(--f-display);font-size:38px;font-weight:700;color:var(--red);line-height:1}
+  .sos-call .lbl b{display:block;font-size:14px;color:var(--tx);margin-bottom:3px}
+  .sos-call .lbl span{font-size:12px;color:var(--tx2);line-height:1.5}
+
+  ol.steps{list-style:none;counter-reset:step;display:flex;flex-direction:column;gap:10px}
+  ol.steps li{
+    counter-increment:step;display:flex;gap:12px;background:var(--bg);border:1px solid var(--line);
+    border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.65;color:var(--tx2)
+  }
+  ol.steps li::before{
+    content:counter(step);flex-shrink:0;width:24px;height:24px;border-radius:50%;
+    background:var(--accent);color:#04121f;font-weight:700;font-size:12px;
+    display:grid;place-items:center;font-family:var(--f-display)
+  }
+  ol.steps li b{display:block;color:var(--tx);margin-bottom:2px}
+
+  .check-item{
+    display:flex;gap:12px;align-items:flex-start;background:var(--bg);border:1px solid var(--line);
+    border-radius:10px;padding:12px 14px;margin-bottom:9px;cursor:pointer;transition:.15s
+  }
+  .check-item:hover{border-color:var(--line2)}
+  .check-item input{
+    appearance:none;width:20px;height:20px;flex-shrink:0;margin-top:1px;
+    border:2px solid var(--line2);border-radius:5px;cursor:pointer;position:relative;background:var(--bg)
+  }
+  .check-item input:checked{background:var(--green);border-color:var(--green)}
+  .check-item input:checked::after{
+    content:'✓';position:absolute;inset:0;display:grid;place-items:center;
+    color:#04121f;font-size:13px;font-weight:700
+  }
+  .check-item .ct{font-size:12.5px;line-height:1.6;color:var(--tx2)}
+  .check-item .ct b{display:block;color:var(--tx);margin-bottom:2px}
+  .check-item.done .ct b{color:var(--green)}
+
+  .badge{
+    display:inline-block;padding:4px 11px;border-radius:999px;font-size:10.5px;
+    font-weight:700;letter-spacing:.3px;text-transform:uppercase
+  }
+  .badge.ok{background:var(--greenbg);color:var(--green);border:1px solid rgba(16,185,129,.4)}
+  .badge.warn{background:var(--amberbg);color:var(--amber);border:1px solid rgba(245,158,11,.4)}
+  .badge.bad{background:var(--redbg);color:var(--red);border:1px solid rgba(239,68,68,.4)}
+
+  /* ---------- Quiz ---------- */
+  .quiz-card{
+    background:var(--bg);border:1px solid var(--line2);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;font-size:13px;line-height:1.75;white-space:pre-wrap;
+    word-break:break-word;color:var(--tx)
+  }
+  .quiz-from{font-size:11px;color:var(--tx3);margin-bottom:9px;font-family:var(--f-mono)}
+  .quiz-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .quiz-choices .btn{padding:14px;font-size:13px;min-height:52px}
+  .quiz-verdict{
+    border-radius:var(--radius);padding:16px;margin-top:14px;border:1px solid;font-size:12.5px;line-height:1.7
+  }
+  .quiz-verdict.right{background:var(--greenbg);border-color:var(--green)}
+  .quiz-verdict.wrong{background:var(--redbg);border-color:var(--red)}
+  .quiz-verdict b{display:block;font-size:14px;margin-bottom:6px;font-family:var(--f-display)}
+  .quiz-verdict.right b{color:var(--green)} .quiz-verdict.wrong b{color:var(--red)}
+  .quiz-score{display:flex;gap:16px;align-items:center;margin-bottom:14px;font-size:12px;color:var(--tx2)}
+  .quiz-score b{font-family:var(--f-display);font-size:22px;color:var(--tx);font-variant-numeric:tabular-nums}
+  .quiz-dots{display:flex;gap:5px}
+  .quiz-dots i{width:8px;height:8px;border-radius:50%;background:var(--line2);display:block}
+  .quiz-dots i.ok{background:var(--green)} .quiz-dots i.no{background:var(--red)}
+
   /* ---------- Phone overrides ----------
      These must sit LAST in the stylesheet: the base .f-row / .samples /
      .field rules are defined after the layout media query above, and with
@@ -353,6 +443,11 @@
     .btn{padding:14px;min-height:48px}
     .fbtn{padding:10px 14px;min-height:44px}
     .toggle-row{padding:12px}
+    .topbar{top:64px;border-radius:12px;padding:10px 10px 10px 13px;flex-wrap:wrap}
+    .topbar .rule{flex:1 1 100%;font-size:12px}
+    .lang{width:100%}
+    .lang button{flex:1;min-height:44px;font-size:12.5px}
+    .quiz-choices{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -365,13 +460,16 @@
       <div class="logo-mark">🛡️</div>
       <div class="logo-txt"><b>FraudShield</b><span>UPI AI Engine</span></div>
     </div>
-    <button class="nav-item active" data-view="dash" aria-current="page"><span class="ic" aria-hidden="true">▣</span> Dashboard</button>
-    <button class="nav-item" data-view="verify"><span class="ic" aria-hidden="true">⚡</span> Verify Payment</button>
-    <button class="nav-item" data-view="message"><span class="ic" aria-hidden="true">✉</span> Message Scanner</button>
-    <button class="nav-item" data-view="vpa"><span class="ic" aria-hidden="true">◎</span> UPI ID &amp; QR Check</button>
-    <button class="nav-item" data-view="ledger"><span class="ic" aria-hidden="true">☰</span> Transaction Ledger</button>
-    <button class="nav-item" data-view="analytics"><span class="ic" aria-hidden="true">◫</span> Fraud Analytics</button>
-    <button class="nav-item" data-view="about"><span class="ic" aria-hidden="true">◈</span> How It Works</button>
+    <button class="nav-item active" data-view="dash" aria-current="page"><span class="ic" aria-hidden="true">▣</span> <span data-i18n="nav.dash">Dashboard</span></button>
+    <button class="nav-item" data-view="verify"><span class="ic" aria-hidden="true">⚡</span> <span data-i18n="nav.verify">Verify Payment</span></button>
+    <button class="nav-item" data-view="message"><span class="ic" aria-hidden="true">✉</span> <span data-i18n="nav.message">Message Scanner</span></button>
+    <button class="nav-item" data-view="vpa"><span class="ic" aria-hidden="true">◎</span> <span data-i18n="nav.vpa">UPI ID &amp; QR Check</span></button>
+    <button class="nav-item" data-view="sos"><span class="ic" aria-hidden="true">🚨</span> <span data-i18n="nav.sos">Emergency SOS</span></button>
+    <button class="nav-item" data-view="merchant"><span class="ic" aria-hidden="true">🏪</span> <span data-i18n="nav.merchant">Shopkeeper Guide</span></button>
+    <button class="nav-item" data-view="quiz"><span class="ic" aria-hidden="true">💡</span> <span data-i18n="nav.quiz">Spot The Scam</span></button>
+    <button class="nav-item" data-view="ledger"><span class="ic" aria-hidden="true">☰</span> <span data-i18n="nav.ledger">Transaction Ledger</span></button>
+    <button class="nav-item" data-view="analytics"><span class="ic" aria-hidden="true">◫</span> <span data-i18n="nav.analytics">Fraud Analytics</span></button>
+    <button class="nav-item" data-view="about"><span class="ic" aria-hidden="true">◈</span> <span data-i18n="nav.about">How It Works</span></button>
     <div class="sidebar-foot">
       <b style="color:var(--tx2)">Merchant:</b> Sukhada Collections<br>
       <b style="color:var(--tx2)">VPA:</b> <span id="side-vpa">sukhada.collect@okaxis</span><br>
@@ -380,6 +478,14 @@
   </aside>
 
   <main class="main">
+
+    <div class="topbar">
+      <div class="rule"><b data-i18n="pill.label">Golden rule:</b> <span data-i18n="pill.text">you never need a UPI PIN to RECEIVE money.</span></div>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en" class="on">English</button>
+        <button type="button" data-lang="mr">मराठी</button>
+      </div>
+    </div>
 
     <!-- ================= DASHBOARD ================= -->
     <section class="view active" id="v-dash">
@@ -673,6 +779,105 @@
             <ul class="action" id="vpa-action"></ul>
 
             <button class="btn ghost" id="vpa-again" style="margin-top:16px">↺ Check another</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================= EMERGENCY SOS ================= -->
+    <section class="view" id="v-sos">
+      <div class="page-head">
+        <h1 data-i18n="sos.h1">Emergency SOS</h1>
+        <p data-i18n="sos.sub">Money already gone? The first hour decides whether you get it back.</p>
+      </div>
+
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-t" data-i18n="sos.callTitle">Call First — Before Anything Else</div>
+          <a class="sos-call" href="tel:1930">
+            <div class="num">1930</div>
+            <div class="lbl">
+              <b data-i18n="sos.helpline">National Cyber Crime Helpline</b>
+              <span data-i18n="sos.helplineSub">Free, 24×7, all India. Tap to dial. Report first, then do everything below.</span>
+            </div>
+          </a>
+          <div class="note">
+            <b data-i18n="sos.goldenHourT">Why the first hour matters</b>
+            <span data-i18n="sos.goldenHourD">A reported transaction can often be held before it leaves the receiving account. After that window the money is usually withdrawn and gone. Reporting late is the single most common reason victims recover nothing.</span>
+          </div>
+          <div class="note" style="border-color:rgba(56,189,248,.25)">
+            <b data-i18n="sos.portalT">Also file online</b>
+            <span data-i18n="sos.portalD">cybercrime.gov.in — file a written complaint the same day. Keep the acknowledgement number; your bank will ask for it.</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-t" data-i18n="sos.stepsTitle">Freeze The Account — In This Order</div>
+          <ol class="steps" id="sos-steps"></ol>
+          <div class="note" style="margin-top:16px">
+            <b data-i18n="sos.evidenceT">Keep the evidence</b>
+            <span data-i18n="sos.evidenceD">Do not delete the message, the number or the transaction. Screenshot everything before you block anyone. The complaint needs it.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MERCHANT GUIDE ================= -->
+    <section class="view" id="v-merchant">
+      <div class="page-head">
+        <h1 data-i18n="mer.h1">Shopkeeper Guide</h1>
+        <p data-i18n="mer.sub">Someone shows you a payment screen. Check these before handing over goods.</p>
+      </div>
+
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-t" data-i18n="mer.checkTitle">The 60-Second Check</div>
+          <div id="mer-checks"></div>
+          <div class="note" style="margin-top:14px" id="mer-progress"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-t" data-i18n="mer.fakeTitle">What A Spoofed Screen Looks Like</div>
+          <div id="mer-signs"></div>
+          <div class="note" style="border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.07);margin-top:16px">
+            <b data-i18n="mer.ruleT">The only check that always works</b>
+            <span data-i18n="mer.ruleD">Do not trust the customer's screen. Open your own bank app or passbook SMS and confirm the money arrived. A fake app can copy any screen perfectly — it cannot put money in your account.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= QUIZ ================= -->
+    <section class="view" id="v-quiz">
+      <div class="page-head">
+        <h1 data-i18n="quiz.h1">Spot The Scam</h1>
+        <p data-i18n="quiz.sub">Ten seconds each. Would you have caught it?</p>
+      </div>
+
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-t"><span data-i18n="quiz.msgTitle">Message</span> <span id="quiz-n"></span></div>
+          <div class="quiz-score">
+            <span data-i18n="quiz.scoreLabel">Score</span> <b id="quiz-score">0</b>
+            <div class="quiz-dots" id="quiz-dots"></div>
+          </div>
+          <div class="quiz-from" id="quiz-from"></div>
+          <div class="quiz-card" id="quiz-body"></div>
+          <div class="quiz-choices">
+            <button class="btn ghost" id="quiz-safe" type="button" data-i18n="quiz.safe">✓ Looks genuine</button>
+            <button class="btn" id="quiz-scam" type="button" data-i18n="quiz.scam">🚨 It's a scam</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-t" data-i18n="quiz.answerTitle">Answer</div>
+          <div id="quiz-empty" class="empty" data-i18n="quiz.empty">⬅ Read the message and choose.</div>
+          <div id="quiz-result" class="hidden" role="status" aria-live="polite">
+            <div class="quiz-verdict" id="quiz-verdict"></div>
+            <div class="card-t" style="margin-top:18px" data-i18n="quiz.tellTitle">What Gave It Away</div>
+            <ul class="why" id="quiz-tells"></ul>
+            <button class="btn" id="quiz-next" type="button" style="margin-top:16px" data-i18n="quiz.next">Next message →</button>
           </div>
         </div>
       </div>
@@ -2201,6 +2406,323 @@ $('vpa-run').onclick = () => {
   $('vpa-action').innerHTML = [...new Set(r.actions)]
     .map(a => `<li><span class="mk">→</span><div>${esc(a)}</div></li>`).join('');
 };
+
+/* ================================================================
+   Localisation
+
+   Scoped deliberately. Everything a person in trouble has to read —
+   navigation, headings, verdicts, the safety modules — is translated.
+   The payment verifier's per-rule technical breakdown stays English:
+   it is operator-facing detail, and a rough translation of it would
+   be worse than none.
+   ================================================================ */
+let LANG = 'en';
+const I18N = {
+  'nav.dash':      ['Dashboard', 'डॅशबोर्ड'],
+  'nav.verify':    ['Verify Payment', 'पेमेंट तपासा'],
+  'nav.message':   ['Message Scanner', 'मेसेज तपासा'],
+  'nav.vpa':       ['UPI ID & QR Check', 'UPI आयडी व QR'],
+  'nav.sos':       ['Emergency SOS', 'तातडीची मदत'],
+  'nav.merchant':  ['Shopkeeper Guide', 'दुकानदार मार्गदर्शन'],
+  'nav.quiz':      ['Spot The Scam', 'फसवणूक ओळखा'],
+  'nav.ledger':    ['Transaction Ledger', 'व्यवहार नोंदवही'],
+  'nav.analytics': ['Fraud Analytics', 'फसवणूक विश्लेषण'],
+  'nav.about':     ['How It Works', 'हे कसे चालते'],
+
+  'pill.label': ['Golden rule:', 'सुवर्ण नियम:'],
+  'pill.text':  ['you never need a UPI PIN to RECEIVE money.',
+                 'पैसे मिळवण्यासाठी UPI PIN ची गरज नसते!'],
+
+  'sos.h1':  ['Emergency SOS', 'तातडीची मदत'],
+  'sos.sub': ['Money already gone? The first hour decides whether you get it back.',
+              'पैसे गेले आहेत? पहिला तासच ठरवतो की ते परत मिळतील की नाही.'],
+  'sos.callTitle': ['Call First — Before Anything Else', 'आधी फोन करा — बाकी सगळे नंतर'],
+  'sos.helpline':  ['National Cyber Crime Helpline', 'राष्ट्रीय सायबर क्राईम हेल्पलाइन'],
+  'sos.helplineSub': ['Free, 24x7, all India. Tap to dial. Report first, then do everything below.',
+                      'मोफत, २४x७, संपूर्ण भारतात. दाबून कॉल करा. आधी तक्रार नोंदवा, मग खालचे करा.'],
+  'sos.goldenHourT': ['Why the first hour matters', 'पहिला तास का महत्त्वाचा'],
+  'sos.goldenHourD': ['A reported transaction can often be held before it leaves the receiving account. After that window the money is usually withdrawn and gone. Reporting late is the single most common reason victims recover nothing.',
+                      'लगेच तक्रार केली तर पैसे समोरच्या खात्यातून बाहेर जाण्याआधी थांबवता येतात. एकदा काढले गेले की परत मिळणे फार अवघड. उशिरा तक्रार करणे हेच पैसे परत न मिळण्याचे सर्वात मोठे कारण आहे.'],
+  'sos.portalT': ['Also file online', 'ऑनलाइन तक्रारही करा'],
+  'sos.portalD': ['cybercrime.gov.in — file a written complaint the same day. Keep the acknowledgement number; your bank will ask for it.',
+                  'cybercrime.gov.in — त्याच दिवशी लेखी तक्रार नोंदवा. पावती क्रमांक जपून ठेवा, बँक तो मागेल.'],
+  'sos.stepsTitle': ['Freeze The Account — In This Order', 'खाते थांबवा — याच क्रमाने'],
+  'sos.evidenceT': ['Keep the evidence', 'पुरावा जपून ठेवा'],
+  'sos.evidenceD': ['Do not delete the message, the number or the transaction. Screenshot everything before you block anyone. The complaint needs it.',
+                    'मेसेज, नंबर किंवा व्यवहार डिलीट करू नका. कोणाला ब्लॉक करण्याआधी सगळ्याचे स्क्रीनशॉट घ्या. तक्रारीसाठी ते लागतात.'],
+
+  'mer.h1':  ['Shopkeeper Guide', 'दुकानदार मार्गदर्शन'],
+  'mer.sub': ['Someone shows you a payment screen. Check these before handing over goods.',
+              'कोणी पेमेंटची स्क्रीन दाखवतो. माल देण्याआधी हे तपासा.'],
+  'mer.checkTitle': ['The 60-Second Check', 'साठ सेकंदाची तपासणी'],
+  'mer.fakeTitle':  ['What A Spoofed Screen Looks Like', 'खोटी स्क्रीन कशी दिसते'],
+  'mer.ruleT': ['The only check that always works', 'नेहमी चालणारी एकच तपासणी'],
+  'mer.ruleD': ['Do not trust the customer screen. Open your own bank app or passbook SMS and confirm the money arrived. A fake app can copy any screen perfectly — it cannot put money in your account.',
+                'ग्राहकाच्या स्क्रीनवर विश्वास ठेवू नका. स्वतःचे बँक अ‍ॅप किंवा बँकेचा SMS उघडून पैसे आले का ते बघा. खोटे अ‍ॅप कोणतीही स्क्रीन हुबेहूब बनवू शकते — पण तुमच्या खात्यात पैसे टाकू शकत नाही.'],
+
+  'quiz.h1':  ['Spot The Scam', 'फसवणूक ओळखा'],
+  'quiz.sub': ['Ten seconds each. Would you have caught it?', 'दहा सेकंद प्रत्येकाला. तुम्ही ओळखले असते का?'],
+  'quiz.msgTitle':   ['Message', 'मेसेज'],
+  'quiz.scoreLabel': ['Score', 'गुण'],
+  'quiz.safe': ['Looks genuine', 'खरा वाटतो'],
+  'quiz.scam': ['It is a scam', 'ही फसवणूक आहे'],
+  'quiz.answerTitle': ['Answer', 'उत्तर'],
+  'quiz.empty': ['Read the message and choose.', 'मेसेज वाचा आणि निवडा.'],
+  'quiz.tellTitle': ['What Gave It Away', 'यावरून ओळखता आले'],
+  'quiz.next': ['Next message', 'पुढचा मेसेज'],
+  'quiz.right': ['Correct', 'बरोबर'],
+  'quiz.wrong': ['Not quite', 'चुकले'],
+  'quiz.done':  ['That is all ten. Start again?', 'दहाही झाले. पुन्हा सुरू करायचे?'],
+  'quiz.restart': ['Start again', 'पुन्हा सुरू करा']
+};
+const t = k => (I18N[k] ? I18N[k][LANG === 'mr' ? 1 : 0] : k);
+
+function applyLang(){
+  document.documentElement.lang = LANG === 'mr' ? 'mr' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const v = I18N[el.dataset.i18n];
+    if(v) el.textContent = v[LANG === 'mr' ? 1 : 0];
+  });
+  document.querySelectorAll('.lang button').forEach(b =>
+    b.classList.toggle('on', b.dataset.lang === LANG));
+  renderSOS(); renderMerchant(); renderQuiz();
+}
+document.querySelectorAll('.lang button').forEach(b => {
+  b.onclick = () => { LANG = b.dataset.lang; applyLang(); };
+});
+
+/* ================================================================
+   MODULE — Emergency SOS
+   Ordered by what actually stops the loss, not by what feels urgent.
+   ================================================================ */
+const SOS_STEPS = [
+  [['Call 1930 now', 'Before you call the bank, before you block the number. The helpline can flag the receiving account across banks; your branch cannot.'],
+   ['आत्ता १९३० ला फोन करा', 'बँकेला फोन करण्याआधी, नंबर ब्लॉक करण्याआधी. हेल्पलाइन समोरचे खाते सगळ्या बँकांमध्ये थांबवू शकते; तुमची शाखा नाही.']],
+  [['Block UPI on your account', 'Call your bank using the number on the back of your card, or SMS the block keyword printed on your last statement. Do not search for the number online — fake helpline numbers are themselves a scam.'],
+   ['तुमच्या खात्यावरील UPI बंद करा', 'कार्डच्या मागच्या बाजूचा बँकेचा नंबर वापरा, किंवा शेवटच्या स्टेटमेंटवरचा block कीवर्ड SMS करा. नंबर ऑनलाइन शोधू नका — खोटे हेल्पलाइन नंबर हाच एक वेगळा घोटाळा आहे.']],
+  [['Change your UPI PIN and app password', 'If you entered a PIN anywhere you were told to, assume it is known. Change it from inside the official app only.'],
+   ['UPI PIN आणि अ‍ॅपचा पासवर्ड बदला', 'कुठे सांगितल्यावरून PIN टाकला असेल तर तो समोरच्याला माहीत आहे असे धरा. फक्त अधिकृत अ‍ॅपमधूनच बदला.']],
+  [['Uninstall anything they made you install', 'AnyDesk, TeamViewer, QuickSupport, any APK. Then restart the phone. These keep working in the background.'],
+   ['त्यांनी लावायला लावलेले अ‍ॅप काढून टाका', 'AnyDesk, TeamViewer, QuickSupport, कोणतेही APK. मग फोन बंद करून चालू करा. ही अ‍ॅप्स मागे चालूच राहतात.']],
+  [['File at cybercrime.gov.in the same day', 'The written complaint is what your bank acts on. Keep the acknowledgement number.'],
+   ['त्याच दिवशी cybercrime.gov.in वर तक्रार करा', 'लेखी तक्रारीवरच बँक कारवाई करते. पावती क्रमांक जपून ठेवा.']],
+  [['Tell your bank in writing within 3 days', 'RBI rules limit your liability when an unauthorised transaction is reported quickly. Email counts, and it carries a date.'],
+   ['तीन दिवसांत बँकेला लेखी कळवा', 'लवकर कळवले तर RBI च्या नियमानुसार तुमची जबाबदारी मर्यादित राहते. ईमेल चालतो आणि त्यावर तारीख असते.']]
+];
+function renderSOS(){
+  const i = LANG === 'mr' ? 1 : 0;
+  $('sos-steps').innerHTML = SOS_STEPS.map(p =>
+    `<li><div><b>${esc(p[i][0])}</b>${esc(p[i][1])}</div></li>`).join('');
+}
+
+/* ================================================================
+   MODULE — Shopkeeper guide
+   ================================================================ */
+const MER_CHECKS = [
+  [['A 12-digit UPI reference is visible', 'Every real UPI payment carries one. If the screen shows none, or fewer digits, it is not a payment receipt.'],
+   ['बारा अंकी UPI संदर्भ क्रमांक दिसतो आहे', 'प्रत्येक खऱ्या UPI पेमेंटवर तो असतो. स्क्रीनवर तो नसेल किंवा कमी अंकी असेल तर ती पावती नाही.']],
+  [['The payee UPI ID is yours', 'Read it letter by letter. A single changed character sends the money to someone else while the screen still looks perfect.'],
+   ['पैसे घेणारा UPI आयडी तुमचाच आहे', 'अक्षर न् अक्षर वाचा. एक अक्षर बदलले तरी पैसे दुसऱ्याकडे जातात आणि स्क्रीन मात्र बरोबर दिसते.']],
+  [['The status says Completed, not Pending', 'Pending means the money has not moved and may never move. It is the most common trick.'],
+   ['स्थिती Completed आहे, Pending नाही', 'Pending म्हणजे पैसे हललेच नाहीत आणि कदाचित हलणारही नाहीत. हीच सर्वात जास्त वापरली जाणारी युक्ती.']],
+  [['The time on the screen is now', 'An old screenshot of a real payment gets reused all day. Check the minutes, not just the date.'],
+   ['स्क्रीनवरची वेळ आत्ताचीच आहे', 'खऱ्या पेमेंटचा जुना स्क्रीनशॉट दिवसभर पुन्हा वापरला जातो. फक्त तारीख नाही, मिनिटे बघा.']],
+  [['The amount matches to the rupee', 'Not close. Exact. Digits are the easiest thing to edit in an image.'],
+   ['रक्कम रुपयापर्यंत जुळते', 'जवळपास नाही, अगदी तंतोतंत. फोटोत आकडे बदलणे सर्वात सोपे असते.']],
+  [['Your own bank app or SMS shows the credit', 'This is the only one that cannot be faked. If you do just one check, do this one.'],
+   ['तुमच्या बँक अ‍ॅपमध्ये किंवा SMS मध्ये पैसे जमा दिसतात', 'हीच एकमेव गोष्ट खोटी करता येत नाही. फक्त एकच तपासणी करणार असाल तर हीच करा.']]
+];
+const MER_SIGNS = [
+  [['bad', 'No reference number, or fewer than 12 digits', 'Fake apps often print a shorter number, or none at all, because no bank generated it.'],
+   ['bad', 'संदर्भ क्रमांक नाही, किंवा बारापेक्षा कमी अंकी', 'खोटी अ‍ॅप्स लहान क्रमांक छापतात किंवा मुळीच छापत नाहीत, कारण तो कोणत्याही बँकेने दिलेला नसतो.']],
+  [['bad', 'The timestamp never moves', 'Ask them to reopen the screen. A real app shows the current time in its transaction list; a screenshot does not change.'],
+   ['bad', 'वेळ बदलत नाही', 'स्क्रीन पुन्हा उघडायला सांगा. खऱ्या अ‍ॅपमध्ये व्यवहार यादीत आत्ताची वेळ दिसते; स्क्रीनशॉट बदलत नाही.']],
+  [['warn', 'Cannot open the transaction history', 'A fake app has one screen. Ask to see the payment inside the app history list, not as a saved image.'],
+   ['warn', 'व्यवहारांची यादी उघडता येत नाही', 'खोट्या अ‍ॅपला एकच स्क्रीन असते. सेव्ह केलेला फोटो नाही, अ‍ॅपच्या यादीत तो व्यवहार दाखवायला सांगा.']],
+  [['warn', 'Slightly wrong logo, spacing or font', 'Copies come close but rarely exact. Compare against a payment you received yourself.'],
+   ['warn', 'लोगो, अंतर किंवा अक्षरे किंचित वेगळी', 'नक्कल जवळपास असते, तंतोतंत क्वचितच. स्वतःला आलेल्या पेमेंटशी तुलना करा.']],
+  [['bad', 'Rushing you while you look', 'Hurry is the whole method. A genuine customer will wait the thirty seconds it takes you to check.'],
+   ['bad', 'तपासताना घाई करतो', 'घाई हीच त्यांची पद्धत आहे. खरा ग्राहक तुम्हाला तपासायला तीस सेकंद थांबेल.']]
+];
+let merTicked = new Set();     // survives a language switch, which re-renders the list
+function renderMerchant(){
+  const i = LANG === 'mr' ? 1 : 0;
+  $('mer-checks').innerHTML = MER_CHECKS.map((p, n) =>
+    `<label class="check-item"><input type="checkbox" data-n="${n}">
+      <div class="ct"><b>${esc(p[i][0])}</b>${esc(p[i][1])}</div></label>`).join('');
+  $('mer-signs').innerHTML = MER_SIGNS.map(p =>
+    `<div class="check-item" style="cursor:default">
+       <span class="badge ${p[i][0]}">${p[i][0] === 'bad' ? 'X' : '!'}</span>
+       <div class="ct"><b>${esc(p[i][1])}</b>${esc(p[i][2])}</div></div>`).join('');
+  document.querySelectorAll('#mer-checks input').forEach(c => {
+    if(merTicked.has(c.dataset.n)){ c.checked = true; c.closest('.check-item').classList.add('done'); }
+    c.onchange = () => {
+      c.checked ? merTicked.add(c.dataset.n) : merTicked.delete(c.dataset.n);
+      c.closest('.check-item').classList.toggle('done', c.checked);
+      merProgress();
+    };
+  });
+  merProgress();
+}
+function merProgress(){
+  const all = [...document.querySelectorAll('#mer-checks input')];
+  const done = all.filter(c => c.checked).length;
+  const mr = LANG === 'mr';
+  const el = $('mer-progress');
+  if(all.length && done === all.length){
+    el.innerHTML = `<b style="color:var(--green)">${mr ? 'सगळे तपासले' : 'All six checked'}</b>`
+      + (mr ? 'तरीही माल देण्याआधी स्वतःच्या बँक अ‍ॅपमध्ये पैसे जमा झाल्याचे बघा.'
+            : 'Even so, confirm the credit in your own bank app before handing over goods.');
+  }else{
+    el.innerHTML = `<b>${done} / ${all.length} ${mr ? 'तपासले' : 'checked'}</b>`
+      + (mr ? 'माल देण्याआधी सहाही तपासा.' : 'Work through all six before you hand over the goods.');
+  }
+}
+
+/* ================================================================
+   MODULE — Spot the scam
+
+   Four of the ten cards are genuine on purpose. A quiz where every
+   answer is "scam" teaches suspicion, not judgement — and a shopkeeper
+   who refuses every real payment loses customers instead of money.
+   ================================================================ */
+const QUIZ = [
+  {scam:true, from:'9021447785',
+   en:'Dear Consumer, your electricity will be DISCONNECTED tonight at 9:30 PM as your bill is not updated. Contact officer 9021447785 immediately.',
+   mr:'प्रिय ग्राहक, बिल अपडेट न झाल्याने तुमची वीज आज रात्री ९:३० वाजता खंडित केली जाईल. तात्काळ अधिकाऱ्यांशी 9021447785 वर संपर्क साधा.',
+   tells:[['A bank or utility never uses a personal mobile number as its sender.','बँक किंवा वीज कंपनी कधीच वैयक्तिक मोबाइल नंबरवरून मेसेज पाठवत नाही.'],
+          ['A same-night deadline exists to stop you checking with anyone.','आजच्या रात्रीची मुदत यासाठीच असते की तुम्ही कोणाला विचारू नये.'],
+          ['Real disconnection notices come on the bill, not by WhatsApp.','खरी खंडित करण्याची सूचना बिलावर येते, WhatsApp वर नाही.']]},
+
+  {scam:false, from:'VM-HDFCBK',
+   en:'Rs.500.00 debited from a/c XX4440 on 21-08-26 to ramesh@okhdfcbank. UPI Ref 128071590530. Not you? SMS BLOCK UPI to 5676712.',
+   mr:'खाते XX4440 मधून २१-०८-२६ रोजी ५००.०० रुपये ramesh@okhdfcbank ला वजा. UPI संदर्भ 128071590530. तुम्ही नाही? 5676712 वर BLOCK UPI SMS करा.',
+   tells:[['The sender is a 6-character bank ID behind an operator prefix, not a mobile number.','पाठवणारा सहा अक्षरी बँक आयडी आहे, मोबाइल नंबर नाही.'],
+          ['It asks for nothing. It reports what happened and how to stop it yourself.','ते काहीच मागत नाही. काय झाले आणि तुम्ही स्वतः कसे थांबवायचे एवढेच सांगते.'],
+          ['A full 12-digit reference is present.','पूर्ण बारा अंकी संदर्भ क्रमांक आहे.']]},
+
+  {scam:true, from:'',
+   en:'Sir your order was cancelled. Refund of Rs.4,500 initiated. To receive it, accept the payment request in GPay and enter your UPI PIN to confirm the credit.',
+   mr:'सर तुमची ऑर्डर रद्द झाली. ४,५०० रुपयांचा परतावा सुरू केला आहे. तो मिळवण्यासाठी GPay मधली रिक्वेस्ट स्वीकारा आणि UPI पिन टाकून पुष्टी करा.',
+   tells:[['A UPI PIN only ever sends money. It is never needed to receive.','UPI पिन फक्त पैसे पाठवतो. मिळवण्यासाठी त्याची गरज कधीच नसते.'],
+          ['Approving a request is you paying them, not them paying you.','रिक्वेस्ट मंजूर करणे म्हणजे तुम्ही त्यांना पैसे देणे, ते तुम्हाला नाही.'],
+          ['A real refund arrives on its own. It asks you for nothing.','खरा परतावा आपोआप येतो. तो तुमच्याकडून काहीच मागत नाही.']]},
+
+  {scam:false, from:'AD-SBIINB',
+   en:'123456 is your OTP for login. Valid for 10 minutes. Do not share it with anyone, including bank staff.',
+   mr:'१२३४५६ हा तुमचा लॉगिनसाठी OTP आहे. दहा मिनिटे वैध. बँक कर्मचाऱ्यांसह कोणालाही सांगू नका.',
+   tells:[['It delivers a code and warns you against sharing it. A scam asks you to share one.','तो कोड देतो आणि सांगू नका असे बजावतो. फसवणूक सांगायला लावते.'],
+          ['Standard bank sender ID format.','नेहमीचा बँक सेंडर आयडी.'],
+          ['No link, no number to call, no deadline.','ना लिंक, ना फोन नंबर, ना मुदत.']]},
+
+  {scam:true, from:'9871200345',
+   en:'Dear SBI Customer, your reward points worth Rs.6,850 expire TODAY. Redeem now: download SBI-Rewards.apk from bit.ly/sbi-redeem and update your KYC.',
+   mr:'प्रिय SBI ग्राहक, ६,८५० रुपयांचे रिवॉर्ड पॉइंट्स आजच संपत आहेत. आत्ताच वापरा: bit.ly/sbi-redeem वरून SBI-Rewards.apk डाउनलोड करा आणि KYC अपडेट करा.',
+   tells:[['No bank distributes an app as an APK over a message.','कोणतीही बँक अ‍ॅप मेसेजवरून APK म्हणून पाठवत नाही.'],
+          ['A shortened link hides where it really goes.','छोटी केलेली लिंक कुठे नेते हे लपवते.'],
+          ['Expiring points plus KYC is the most-used opener in Indian fraud.','संपणारे पॉइंट्स आणि KYC ही भारतातली सर्वात वापरली जाणारी सुरुवात.']]},
+
+  {scam:false, from:'',
+   en:'Bhaiya order ready hai, 1200 rupees hue. Aap aake le jao ya UPI kar do.',
+   mr:'भैया ऑर्डर तयार आहे, १२०० रुपये झाले. येऊन घेऊन जा किंवा UPI करा.',
+   tells:[['No urgency, no threat, no link, no credentials asked.','ना घाई, ना धमकी, ना लिंक, ना कोणती गुप्त माहिती.'],
+          ['It is a request to pay a shop you know, not a request for secrets.','ओळखीच्या दुकानाला पैसे देण्याची विनंती आहे, गुपिते मागणारी नाही.']]},
+
+  {scam:true, from:'',
+   en:'Congratulations! You have won Rs.25,00,000 in the KBC lucky draw. Call 9876543210 to claim your prize before it lapses.',
+   mr:'अभिनंदन! KBC लकी ड्रॉमध्ये तुम्ही २५,००,००० रुपये जिंकले आहेत. बक्षीस संपण्याआधी 9876543210 वर कॉल करून घ्या.',
+   tells:[['You cannot win a draw you never entered.','ज्यात भाग घेतलाच नाही ते बक्षीस जिंकता येत नाही.'],
+          ['The next step is always a processing fee. That fee is the scam.','पुढचे पाऊल नेहमी प्रोसेसिंग फी असते. तीच खरी फसवणूक.'],
+          ['Getting you onto a call is where the pressure starts.','फोनवर घेणे इथूनच दबाव सुरू होतो.']]},
+
+  {scam:true, from:'',
+   en:'Namaskar! Gharbaslya kamai kara. Roj 3000 te 8000 rupaye. Fakt simple task purn kara. Telegram group t.me/marathi_task var join kara.',
+   mr:'नमस्कार! घरबसल्या कमाई करा. रोज ३००० ते ८००० रुपये. फक्त सोपे टास्क पूर्ण करा. आमच्या टेलिग्राम ग्रुप t.me/marathi_task वर जॉईन व्हा.',
+   tells:[['Earnings promised before any work is a lure, not a job.','काम करण्याआधीच कमाईचे आश्वासन ही नोकरी नाही, आमिष आहे.'],
+          ['Task scams pay small amounts first, then ask for a deposit. The deposit is the scam.','टास्क घोटाळे आधी थोडे पैसे देतात, मग डिपॉझिट मागतात. तेच खरे नुकसान.'],
+          ['Real employers do not recruit into a Telegram group.','खरे मालक टेलिग्राम ग्रुपवर भरती करत नाहीत.']]},
+
+  {scam:false, from:'AX-ICICIB',
+   en:'Your debit card ending 4440 was used for Rs.2,000 at BIG BAZAAR. If this was not you, call 18002026161 to block the card.',
+   mr:'तुमचे 4440 ने संपणारे डेबिट कार्ड BIG BAZAAR येथे २,००० रुपयांसाठी वापरले गेले. तुम्ही नसाल तर 18002026161 वर कॉल करून कार्ड बंद करा.',
+   tells:[['A toll-free number, not a personal mobile.','टोल-फ्री नंबर आहे, वैयक्तिक मोबाइल नाही.'],
+          ['It reports something that already happened; it does not ask for anything.','जे घडून गेले ते सांगते; काहीच मागत नाही.'],
+          ['Bank sender ID, and the card is named only by its last four digits.','बँक सेंडर आयडी, आणि कार्डचे फक्त शेवटचे चार अंक.']]},
+
+  {scam:true, from:'',
+   en:'Your KYC is pending, account will be closed today. Install AnyDesk and share the 9 digit code with our executive to complete verification.',
+   mr:'तुमचे KYC बाकी आहे, आज खाते बंद होईल. पडताळणीसाठी AnyDesk इन्स्टॉल करा आणि नऊ अंकी कोड आमच्या अधिकाऱ्याला सांगा.',
+   tells:[['AnyDesk hands them your screen, your banking app and your OTPs.','AnyDesk मुळे त्यांना तुमची स्क्रीन, बँक अ‍ॅप आणि OTP सगळे दिसते.'],
+          ['No bank completes KYC by remote-controlling your phone.','कोणतीही बँक तुमचा फोन ताब्यात घेऊन KYC करत नाही.'],
+          ['Account closes today is manufactured panic.','आज खाते बंद होईल ही मुद्दाम केलेली भीती.']]}
+];
+let quizIdx = 0, quizScore = 0, quizMarks = [];
+
+function renderQuizDots(){
+  $('quiz-dots').innerHTML = QUIZ.map((_, i) =>
+    `<i class="${quizMarks[i] === true ? 'ok' : quizMarks[i] === false ? 'no' : ''}"></i>`).join('');
+}
+
+function renderQuiz(){
+  const mr = LANG === 'mr';
+  const done = quizIdx >= QUIZ.length;
+  $('quiz-safe').classList.toggle('hidden', done);
+  if(done){
+    $('quiz-n').textContent = '';
+    $('quiz-from').textContent = '';
+    $('quiz-body').textContent = t('quiz.done') + '  ' + quizScore + ' / ' + QUIZ.length;
+    $('quiz-scam').textContent = t('quiz.restart');
+    $('quiz-scam').onclick = resetQuiz;
+  }else{
+    const q = QUIZ[quizIdx];
+    $('quiz-n').textContent = `${quizIdx + 1} / ${QUIZ.length}`;
+    $('quiz-body').textContent = mr ? q.mr : q.en;
+    $('quiz-from').textContent = (mr ? 'पाठवणारा: ' : 'From: ') + (q.from || (mr ? 'अज्ञात' : 'unknown'));
+    $('quiz-scam').textContent = t('quiz.scam');
+    $('quiz-scam').onclick = () => answerQuiz(true);
+  }
+  $('quiz-safe').textContent = t('quiz.safe');
+  $('quiz-score').textContent = quizScore;
+  renderQuizDots();
+}
+
+function resetQuiz(){
+  quizIdx = 0; quizScore = 0; quizMarks = [];
+  $('quiz-result').classList.add('hidden');
+  $('quiz-empty').classList.remove('hidden');
+  renderQuiz();
+}
+
+function answerQuiz(saidScam){
+  const q = QUIZ[quizIdx];
+  if(!q) return;
+  const right = saidScam === q.scam;
+  const mr = LANG === 'mr';
+  quizMarks[quizIdx] = right;
+  if(right) quizScore++;
+
+  $('quiz-empty').classList.add('hidden');
+  $('quiz-result').classList.remove('hidden');
+  $('quiz-verdict').className = 'quiz-verdict ' + (right ? 'right' : 'wrong');
+  $('quiz-verdict').innerHTML = `<b>${esc(right ? t('quiz.right') : t('quiz.wrong'))}</b>`
+    + esc(q.scam ? (mr ? 'हा खरोखर घोटाळा आहे.' : 'This one is a scam.')
+                 : (mr ? 'हा मेसेज खरा आहे.'   : 'This message is genuine.'));
+  $('quiz-tells').innerHTML = q.tells.map(p =>
+    `<li class="${q.scam ? 'hi' : 'ok'}"><span class="mk">${q.scam ? 'X' : '✓'}</span>
+      <div>${esc(p[mr ? 1 : 0])}</div></li>`).join('');
+  $('quiz-score').textContent = quizScore;
+  renderQuizDots();
+}
+
+$('quiz-safe').onclick = () => answerQuiz(false);
+$('quiz-next').onclick = () => {
+  quizIdx++;
+  $('quiz-result').classList.add('hidden');
+  $('quiz-empty').classList.remove('hidden');
+  renderQuiz();
+};
+
+applyLang();
 
 renderDash();
 </script>

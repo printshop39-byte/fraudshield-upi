@@ -43,6 +43,8 @@ handling forty payments a day.
 
 Every module scores 0–100, explains each finding in plain language, and ends with what to do next. Nothing is uploaded — all of it runs in the browser.
 
+**English / मराठी throughout.** A switcher in the header translates navigation, headings, the safety modules and the quiz, including the ten quiz messages themselves. A sticky reminder sits above every page: *सुवर्ण नियम: पैसे मिळवण्यासाठी UPI PIN ची गरज नसते!*
+
 ---
 
 ## What the payment verifier does
