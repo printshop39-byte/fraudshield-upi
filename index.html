@@ -934,6 +934,7 @@ function loadImage(f){
 const OCR_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
 const OCR_TIMEOUT = 30000;
 let ocrLoader = null;
+let lastParsed = null;   // last OCR parse, re-checked when the merchant VPA changes
 
 function loadOCR(){
   if(window.Tesseract) return Promise.resolve(window.Tesseract);
@@ -1025,6 +1026,7 @@ async function runOCR(blob){
       new Promise((_, r) => setTimeout(() => r(new Error('timeout')), OCR_TIMEOUT))
     ]);
     const got = parseUPIText(text || '');
+    lastParsed = got;
 
     const filled = [];
     if(got.amount){ $('i-amt').value = got.amount; $('i-exp').value = got.amount; filled.push('amount'); markAuto('i-amt'); markAuto('i-exp'); }
@@ -1062,6 +1064,7 @@ function markAuto(id){
    genuine payment as a duplicate — the fields are cleared instead and
    the operator is asked to read the real ones off the image. */
 function clearFieldsForUpload(){
+  lastParsed = null;
   ['i-amt','i-exp','i-utr','i-vpa','i-payer','i-mobile'].forEach(id => {
     $(id).value = ''; $(id).classList.remove('autofilled');
   });
@@ -1081,6 +1084,9 @@ function syncMerchantVPA(){
   const v = $('i-merchant').value.trim();
   MERCHANT_VPA = v || DEFAULT_MERCHANT_VPA;
   $('side-vpa').textContent = MERCHANT_VPA;
+  /* Re-evaluate against the screenshot we already read, so the advice
+     tracks the field instead of going stale the moment it is edited. */
+  if(lastParsed) flagPaymentDirection(lastParsed);
 }
 $('i-merchant').addEventListener('input', syncMerchantVPA);
 
@@ -1088,26 +1094,54 @@ $('i-merchant').addEventListener('input', syncMerchantVPA);
    FraudShield checks payments you RECEIVED. If the screenshot's payee is
    someone else but its payer is you, the operator has uploaded a payment
    they sent — the tool is not wrong, it is being pointed the wrong way. */
+/* Same person, different bank handle: jumbo2667197@okhdfc vs
+   @okhdfcbank. Real operators mistype or truncate these constantly, and
+   an exact comparison would call it a stranger's account. */
+const localPart = v => (v || '').toLowerCase().split('@')[0];
+const sameLocal = (a, b) => !!localPart(a) && localPart(a) === localPart(b) && a.toLowerCase() !== b.toLowerCase();
+
 function flagPaymentDirection(got){
   const note = $('direction-note');
   note.classList.add('hidden');
-  if(!got.vpa && !got.payerVpa) return;
+  if(!got || (!got.vpa && !got.payerVpa)) return;
   const me   = MERCHANT_VPA.toLowerCase();
   const to   = (got.vpa || '').toLowerCase();
   const from = (got.payerVpa || '').toLowerCase();
 
-  if(from && from === me && to !== me){
+  const useThis = vpa =>
+    `<button type="button" class="btn ghost note-fix" data-vpa="${esc(vpa)}" style="margin-top:9px">`
+    + `Use ${esc(vpa)} as my merchant UPI ID</button>`;
+
+  if(sameLocal(MERCHANT_VPA, got.payerVpa)){
+    note.innerHTML = `<b>Your UPI ID looks incomplete.</b>`
+      + `You entered ${esc(MERCHANT_VPA)}, but the screenshot's sender is ${esc(got.payerVpa)} — `
+      + `the same ID with a different bank handle. Fix it, and note this is a payment you <i>sent</i>: `
+      + `FraudShield checks payments made <i>to</i> you.` + useThis(got.payerVpa);
+  }else if(sameLocal(MERCHANT_VPA, got.vpa)){
+    note.innerHTML = `<b>Your UPI ID looks incomplete.</b>`
+      + `You entered ${esc(MERCHANT_VPA)}, but the screenshot pays ${esc(got.vpa)} — `
+      + `the same ID with a different bank handle.` + useThis(got.vpa);
+  }else if(from && from === me && to !== me){
     note.innerHTML = `<b>This looks like a payment you sent, not one you received.</b>`
       + `The screenshot shows money going from your UPI ID (${esc(got.payerVpa)}) to ${esc(got.vpa)}. `
       + `FraudShield checks proof of payments made <i>to</i> you, so this will flag as a payee mismatch.`;
-    note.classList.remove('hidden');
   }else if(to && to !== me){
     note.innerHTML = `<b>Payee on this screenshot is ${esc(got.vpa)}.</b>`
       + `Your merchant UPI ID is set to ${esc(MERCHANT_VPA)}. If ${esc(got.vpa)} is actually yours, `
-      + `change the field above — otherwise this payment did not reach you.`;
-    note.classList.remove('hidden');
+      + `use the button below — otherwise this payment did not reach you.` + useThis(got.vpa);
+  }else{
+    return;                                   // payee matches: nothing to say
   }
+  note.classList.remove('hidden');
 }
+
+/* One click to point the tool at the UPI ID the screenshot actually names. */
+$('direction-note').addEventListener('click', e => {
+  const b = e.target.closest('.note-fix');
+  if(!b) return;
+  $('i-merchant').value = b.dataset.vpa;
+  syncMerchantVPA();
+});
 
 /* ---- payer lookup by mobile ----
    A mobile number cannot be resolved against bank or NPCI records from a
