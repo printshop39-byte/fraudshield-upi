@@ -996,6 +996,22 @@ function loadImage(f){
    for checking rather than trusted.
    ================================================================ */
 const OCR_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+/* Subresource Integrity: the browser hashes the delivered file and refuses
+   to execute it unless it matches. Without this the page would run whatever
+   the CDN returned — including, if that CDN were ever compromised, code with
+   access to the screenshot held in memory.
+
+   The hash pins this exact 5.1.1 build (66,695 bytes). Never float the
+   version to @5: a new release would fail the check and silently disable
+   OCR. If the version is bumped deliberately, recompute with
+
+     curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A
+
+   SRI covers this file only. Tesseract fetches its worker, WebAssembly core
+   and language data at recognise time through its own loader, which offers
+   no integrity hook — vendoring the library into the repo is what would
+   close that remainder. */
+const OCR_SRI = 'sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F';
 const OCR_TIMEOUT = 30000;
 let ocrLoader = null;
 let lastParsed = null;   // last OCR parse, re-checked when the merchant VPA changes
@@ -1006,8 +1022,12 @@ function loadOCR(){
   ocrLoader = new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = OCR_SRC;
+    s.integrity = OCR_SRI;
+    s.crossOrigin = 'anonymous';        // required for SRI to be enforced
     s.onload  = () => window.Tesseract ? resolve(window.Tesseract) : reject(new Error('loaded but absent'));
-    s.onerror = () => reject(new Error('script blocked or offline'));
+    /* Also fires when the integrity check fails, so a tampered file lands
+       in the same place as no network: manual entry, with a message. */
+    s.onerror = () => reject(new Error('blocked, offline, or failed integrity check'));
     document.head.appendChild(s);
   });
   return ocrLoader;
