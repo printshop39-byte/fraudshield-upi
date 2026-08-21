@@ -301,7 +301,7 @@
     <button class="nav-item" data-view="about"><span class="ic" aria-hidden="true">◈</span> How It Works</button>
     <div class="sidebar-foot">
       <b style="color:var(--tx2)">Merchant:</b> Sukhada Collections<br>
-      <b style="color:var(--tx2)">VPA:</b> sukhada.collect@okaxis<br>
+      <b style="color:var(--tx2)">VPA:</b> <span id="side-vpa">sukhada.collect@okaxis</span><br>
       <span style="color:var(--green)">● Engine online</span>
     </div>
   </aside>
@@ -369,7 +369,15 @@
       <div class="grid g2">
         <!-- INPUT -->
         <div class="card">
-          <div class="card-t">Step 1 — Payment Proof</div>
+          <div class="card-t">Your Merchant UPI ID</div>
+          <div class="field">
+            <label for="i-merchant">The UPI ID that should receive the money</label>
+            <input id="i-merchant" value="sukhada.collect@okaxis">
+            <small class="hint">Set this to your own VPA before checking real screenshots — every payee is compared against it.</small>
+          </div>
+          <div id="direction-note" class="form-note hidden"></div>
+
+          <div class="card-t" style="margin:22px 0 12px">Step 1 — Payment Proof</div>
 
           <img id="prev" class="preview hidden" alt="uploaded screenshot preview">
           <div class="drop" id="drop">
@@ -608,8 +616,14 @@
    FraudShield — detection engine
    ================================================================ */
 
-/* ---------- Merchant config ---------- */
-const MERCHANT_VPA = 'sukhada.collect@okaxis';
+/* ---------- Merchant config ----------
+   The VPA that is supposed to RECEIVE the money. Every real screenshot
+   pays a real UPI ID, so this cannot be a fixed demo value — rule R3
+   would then fail for everyone. It is editable in the UI and read live
+   by the rules; the constant below is only the starting value and what
+   the seeded demo ledger was built against. */
+const DEFAULT_MERCHANT_VPA = 'sukhada.collect@okaxis';
+let MERCHANT_VPA = DEFAULT_MERCHANT_VPA;
 
 /* ---------- Rule definitions ----------
    Each rule returns true when the FRAUD CONDITION is present.
@@ -718,17 +732,17 @@ function payerClaims(t){
 /* ---------- Demo cases ---------- */
 const SAMPLES = [
   {t:'✓ Genuine payment', d:'Everything checks out',
-   v:{amt:2500, exp:2500, utr:'770418299356', vpa:MERCHANT_VPA, payer:'Kiran Deshmukh', mobile:'9673410288', age:'0.2', gw:true}},
+   v:{amt:2500, exp:2500, utr:'770418299356', vpa:'@SELF', payer:'Kiran Deshmukh', mobile:'9673410288', age:'0.2', gw:true}},
   {t:'✕ Screenshot replay', d:'Same UTR used before',
-   v:{amt:2500, exp:2500, utr:'412508931477', vpa:MERCHANT_VPA, payer:'Ramesh Patil', mobile:'9822014577', age:'0.2', gw:false}},
+   v:{amt:2500, exp:2500, utr:'412508931477', vpa:'@SELF', payer:'Ramesh Patil', mobile:'9822014577', age:'0.2', gw:false}},
   {t:'✕ Wrong UPI ID', d:'Money went elsewhere',
    v:{amt:3000, exp:3000, utr:'883012774590', vpa:'rakesh.collect@ybl', payer:'Sanjay Bhosale', mobile:'9011256630', age:'0.2', gw:false}},
   {t:'✕ Edited amount', d:'₹12,500 claimed vs ₹1,250 due',
-   v:{amt:12500, exp:1250, utr:'559108234461', vpa:MERCHANT_VPA, payer:'Amit Kore', mobile:'9146770231', age:'72', gw:false}},
+   v:{amt:12500, exp:1250, utr:'559108234461', vpa:'@SELF', payer:'Amit Kore', mobile:'9146770231', age:'72', gw:false}},
   {t:'✕ Payer identity mismatch', d:'Known number, new name',
-   v:{amt:2000, exp:2000, utr:'660192883047', vpa:MERCHANT_VPA, payer:'Rahul Salunkhe', mobile:'9822014577', age:'0.2', gw:false}},
+   v:{amt:2000, exp:2000, utr:'660192883047', vpa:'@SELF', payer:'Rahul Salunkhe', mobile:'9822014577', age:'0.2', gw:false}},
   {t:'✓ First-time payer', d:'Unknown number, all clean',
-   v:{amt:1500, exp:1500, utr:'490273116628', vpa:MERCHANT_VPA, payer:'Manisha Pawar', mobile:'8767445190', age:'0.2', gw:true}}
+   v:{amt:1500, exp:1500, utr:'490273116628', vpa:'@SELF', payer:'Manisha Pawar', mobile:'8767445190', age:'0.2', gw:true}}
 ];
 
 /* ================================================================
@@ -849,7 +863,8 @@ document.querySelectorAll('.sample-btn').forEach(b => {
   b.onclick = () => {
     const v = SAMPLES[+b.dataset.i].v;
     $('i-amt').value = v.amt; $('i-exp').value = v.exp;
-    $('i-utr').value = v.utr; $('i-vpa').value = v.vpa;
+    $('i-utr').value = v.utr;
+    $('i-vpa').value = v.vpa === '@SELF' ? MERCHANT_VPA : v.vpa;
     $('i-payer').value = v.payer; $('i-age').value = v.age;
     $('i-mobile').value = v.mobile || '';
     $('i-gw').checked = v.gw;
@@ -947,10 +962,26 @@ function parseUPIText(txt){
   /* Walk every handle, not just the first — a screenshot often carries a
      support email before the payee VPA, and stopping at the first match
      would return the email or nothing. */
-  const handles = flat.match(/\b[a-zA-Z0-9][a-zA-Z0-9._-]+@[a-zA-Z][a-zA-Z.]*[a-zA-Z]\b/g) || [];
-  const vpa = handles.find(h => !/\.(com|in|org|net|co)$/i.test(h)
-                             && !/@(gmail|yahoo|outlook|hotmail|rediffmail)\b/i.test(h));
-  if(vpa) out.vpa = vpa;
+  const HANDLE = /[a-zA-Z0-9][a-zA-Z0-9._-]+@[a-zA-Z][a-zA-Z.]*[a-zA-Z]/;
+  const isVPA  = h => !/\.(com|in|org|net|co)$/i.test(h)
+                   && !/@(gmail|yahoo|outlook|hotmail|rediffmail)\b/i.test(h);
+
+  /* A GPay receipt lists both sides — "To: … rishita9000@oksbi" then
+     "From: … jumbo2667197@okhdfcbank". Reading only the first handle
+     cannot tell whether this payment came in or went out, so anchor on
+     the labels and keep both. */
+  const near = label => {
+    const i = flat.search(new RegExp(label, 'i'));
+    if(i < 0) return null;
+    const m = flat.slice(i, i + 200).match(HANDLE);
+    return m && isVPA(m[0]) ? m[0] : null;
+  };
+  const handles = (flat.match(new RegExp(HANDLE.source, 'g')) || []).filter(isVPA);
+  out.vpa      = near('\\bTo\\s*:')   || handles[0] || undefined;
+  out.payerVpa = near('\\bFrom\\s*:') || undefined;
+  if(out.payerVpa === out.vpa) out.payerVpa = handles.find(h => h !== out.vpa);
+  if(!out.vpa) delete out.vpa;
+  if(!out.payerVpa) delete out.payerVpa;
 
   /* UPI apps group phone numbers — "+91 98220 14577", "98-220-14577" — so
      join digit runs split only by a space or hyphen, then accept a run
@@ -999,6 +1030,7 @@ async function runOCR(blob){
     if(got.amount){ $('i-amt').value = got.amount; $('i-exp').value = got.amount; filled.push('amount'); markAuto('i-amt'); markAuto('i-exp'); }
     if(got.utr)   { $('i-utr').value = got.utr;       filled.push('reference number'); markAuto('i-utr'); }
     if(got.vpa)   { $('i-vpa').value = got.vpa;       filled.push('payee UPI ID');     markAuto('i-vpa'); }
+    flagPaymentDirection(got);
     /* Name from the image before the mobile lookup runs, so R9 compares
        what the proof claims against what history knows. */
     if(got.payer) { $('i-payer').value = got.payer;   filled.push('payer name');       markAuto('i-payer'); }
@@ -1035,10 +1067,46 @@ function clearFieldsForUpload(){
   });
   $('i-age').value = '0.2';
   $('payer-note').classList.add('hidden');
+  $('direction-note').classList.add('hidden');
   $('upload-note').classList.remove('hidden');
   $('result').classList.add('hidden');
   $('result-empty').classList.remove('hidden');
   $('i-amt').focus();
+}
+
+/* ---- merchant VPA ----
+   Read live by rule R3 so a real merchant can point the tool at their own
+   UPI ID instead of the seeded demo one. */
+function syncMerchantVPA(){
+  const v = $('i-merchant').value.trim();
+  MERCHANT_VPA = v || DEFAULT_MERCHANT_VPA;
+  $('side-vpa').textContent = MERCHANT_VPA;
+}
+$('i-merchant').addEventListener('input', syncMerchantVPA);
+
+/* ---- which way did the money go? ----
+   FraudShield checks payments you RECEIVED. If the screenshot's payee is
+   someone else but its payer is you, the operator has uploaded a payment
+   they sent — the tool is not wrong, it is being pointed the wrong way. */
+function flagPaymentDirection(got){
+  const note = $('direction-note');
+  note.classList.add('hidden');
+  if(!got.vpa && !got.payerVpa) return;
+  const me   = MERCHANT_VPA.toLowerCase();
+  const to   = (got.vpa || '').toLowerCase();
+  const from = (got.payerVpa || '').toLowerCase();
+
+  if(from && from === me && to !== me){
+    note.innerHTML = `<b>This looks like a payment you sent, not one you received.</b>`
+      + `The screenshot shows money going from your UPI ID (${esc(got.payerVpa)}) to ${esc(got.vpa)}. `
+      + `FraudShield checks proof of payments made <i>to</i> you, so this will flag as a payee mismatch.`;
+    note.classList.remove('hidden');
+  }else if(to && to !== me){
+    note.innerHTML = `<b>Payee on this screenshot is ${esc(got.vpa)}.</b>`
+      + `Your merchant UPI ID is set to ${esc(MERCHANT_VPA)}. If ${esc(got.vpa)} is actually yours, `
+      + `change the field above — otherwise this payment did not reach you.`;
+    note.classList.remove('hidden');
+  }
 }
 
 /* ---- payer lookup by mobile ----
@@ -1163,6 +1231,7 @@ $('again').onclick = () => {
   clearFormError();
   $('upload-note').classList.add('hidden');
   $('payer-note').classList.add('hidden');
+  $('direction-note').classList.add('hidden');
   document.querySelectorAll('.field .autofilled').forEach(e => e.classList.remove('autofilled'));
   $('prev').classList.add('hidden');
   drop.classList.remove('hidden');
