@@ -82,7 +82,7 @@ d.text((M, 322), "UPI payment screenshots",          font=bold(52), fill=TX)
 
 # ---- supporting line ----
 d.text((M, 398),
-       "Nine weighted rules produce an auditable risk verdict in under a second.",
+       "Twelve weighted rules produce an auditable risk verdict in under a second.",
        font=reg(28), fill=TX2)
 
 # ---- verdict chips ----

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FraudShield UPI Console</title>
-<meta name="description" content="Explainable fraud screening for UPI payment screenshots — nine weighted rules produce an auditable risk verdict in under a second, entirely in your browser.">
+<meta name="description" content="Explainable fraud screening for UPI payment screenshots — twelve weighted rules produce an auditable risk verdict in under a second, entirely in your browser.">
 <meta name="theme-color" content="#0d0b14">
 <link rel="canonical" href="https://printshop39-byte.github.io/fraudshield-upi/">
 <!-- Inline SVG favicon: no extra request, works offline. -->
@@ -162,6 +162,13 @@
     border-radius:9px;padding:11px 13px;font-size:12px;margin:12px 0 4px;line-height:1.65
   }
   .form-note b{color:var(--accent);display:block;margin-bottom:3px}
+  .ocr-raw{margin-top:12px;border:1px solid var(--line2);border-radius:9px;background:var(--bg)}
+  .ocr-raw summary{padding:10px 12px;cursor:pointer;font-size:12px;color:var(--tx2);user-select:none}
+  .ocr-raw summary:hover{color:var(--tx)}
+  .ocr-raw pre{
+    margin:0;padding:0 12px 12px;font-family:var(--f-mono);font-size:11px;color:var(--tx2);
+    white-space:pre-wrap;word-break:break-word;max-height:210px;overflow:auto
+  }
 
   .btn{
     width:100%;padding:12px;border:none;border-radius:9px;font-size:14px;font-weight:620;
@@ -413,14 +420,29 @@
             </div>
           </div>
           <div id="payer-note" class="form-note hidden"></div>
-          <div class="field"><label for="i-age">Screenshot age</label>
-            <select id="i-age">
-              <option value="0.2">Just now (12 min)</option>
-              <option value="20">Today (20 hrs)</option>
-              <option value="72">3 days old</option>
-              <option value="480">20 days old</option>
-            </select>
+          <div class="f-row">
+            <div class="field"><label for="i-status">Status on receipt</label>
+              <select id="i-status">
+                <option value="completed">Completed / Successful</option>
+                <option value="pending">Pending / Processing</option>
+                <option value="failed">Failed / Declined</option>
+                <option value="">Not shown</option>
+              </select>
+            </div>
+            <div class="field"><label for="i-age">Screenshot age</label>
+              <select id="i-age">
+                <option value="0.2">Just now (12 min)</option>
+                <option value="20">Today (20 hrs)</option>
+                <option value="72">3 days old</option>
+                <option value="480">20 days old</option>
+              </select>
+            </div>
           </div>
+
+          <details id="ocr-raw" class="ocr-raw hidden">
+            <summary>What the screenshot reader saw</summary>
+            <pre id="ocr-text"></pre>
+          </details>
           <div class="toggle-row">
             <div class="tl"><b>Payment gateway connected</b><span>Cross-check UTR against real bank settlement</span></div>
             <label class="sw"><input type="checkbox" id="i-gw" checked aria-label="Payment gateway connected"><span class="sl"></span></label>
@@ -523,12 +545,12 @@
               │
               ▼
  ┌────────────────────────────────┐
- │  2. FIELD EXTRACTION (OCR)     │  → amount, UTR, payee VPA, mobile
+ │  2. FIELD EXTRACTION (OCR)     │  → amount, UTR, VPA, mobile, status
  └────────────────────────────────┘
               │
               ▼
  ┌────────────────────────────────┐
- │  3. RULE ENGINE (9 rules)      │  → weighted risk score 0–100
+ │  3. RULE ENGINE (12 rules)     │  → weighted risk score 0–100
  └────────────────────────────────┘
               │
               ▼
@@ -698,6 +720,43 @@ const RULES = [
                : 'First payment from this mobile number — nothing to contradict.';
     } },
 
+  { id:'R10', name:'Transaction status', weight:65,
+    detects:'Pending or failed payment shown as proof',
+    /* A "Pending" receipt is not proof of payment, and money that never
+       left is the most common loss of all. Weighted to reach Red alone. */
+    test:t => t.status === 'pending' || t.status === 'failed',
+    msg:t => t.status === 'failed'
+      ? 'The screenshot shows a FAILED transaction. No money moved — this is not proof of payment.'
+      : 'The screenshot shows a PENDING transaction. The payment has not settled and can still fail or be reversed.',
+    ok:t => t.status === 'completed'
+      ? 'Receipt shows the transaction completed successfully.'
+      : 'Status not stated — could not confirm the payment completed.' },
+
+  { id:'R11', name:'Duplicate claim window', weight:35,
+    detects:'Same payer claiming the same amount twice',
+    /* Catches a second claim for one payment made with a fresh reference,
+       which R1 cannot see. */
+    test:t => LEDGER.some(x => x.amount === t.amount && x.utr !== t.utr &&
+              ((t.mobile && x.mobile === t.mobile) ||
+               (!t.mobile && x.payer && t.payer && x.payer.toLowerCase() === t.payer.toLowerCase()))),
+    msg:t => {
+      const p = LEDGER.find(x => x.amount === t.amount && x.utr !== t.utr &&
+                ((t.mobile && x.mobile === t.mobile) ||
+                 (!t.mobile && x.payer.toLowerCase() === t.payer.toLowerCase())));
+      return `The same payer already claimed ₹${fmt(t.amount)} on ${p.date} under reference ${p.utr}. This is a second claim for the same amount.`;
+    },
+    ok:'No earlier claim from this payer for the same amount.' },
+
+  { id:'R12', name:'Receipt completeness', weight:20,
+    detects:'Cropped or fabricated receipt',
+    /* Only meaningful when OCR actually read the image; manual entry
+       carries no receipt structure to judge. */
+    test:t => t.ocrRan && ([t.hasTxnId, t.hasBank, t.hasAppMark].filter(Boolean).length < 2),
+    msg:() => 'The receipt is missing structural details a genuine app screenshot normally shows — transaction ID, bank name, or app branding. It may be cropped, or assembled.',
+    ok:t => t.ocrRan
+      ? 'Receipt carries the transaction ID, bank and app markings expected of a genuine screenshot.'
+      : 'Details entered manually — no receipt structure to assess.' },
+
   { id:'R8', name:'Bank settlement match', weight:30,
     detects:'No real money received',
     test:t => !t.gateway,
@@ -732,17 +791,21 @@ function payerClaims(t){
 /* ---------- Demo cases ---------- */
 const SAMPLES = [
   {t:'✓ Genuine payment', d:'Everything checks out',
-   v:{amt:2500, exp:2500, utr:'770418299356', vpa:'@SELF', payer:'Kiran Deshmukh', mobile:'9673410288', age:'0.2', gw:true}},
+   v:{amt:2500, exp:2500, utr:'770418299356', status:'completed', vpa:'@SELF', payer:'Kiran Deshmukh', mobile:'9673410288', age:'0.2', gw:true}},
   {t:'✕ Screenshot replay', d:'Same UTR used before',
-   v:{amt:2500, exp:2500, utr:'412508931477', vpa:'@SELF', payer:'Ramesh Patil', mobile:'9822014577', age:'0.2', gw:false}},
+   v:{amt:2500, exp:2500, utr:'412508931477', status:'completed', vpa:'@SELF', payer:'Ramesh Patil', mobile:'9822014577', age:'0.2', gw:false}},
   {t:'✕ Wrong UPI ID', d:'Money went elsewhere',
-   v:{amt:3000, exp:3000, utr:'883012774590', vpa:'rakesh.collect@ybl', payer:'Sanjay Bhosale', mobile:'9011256630', age:'0.2', gw:false}},
+   v:{amt:3000, exp:3000, utr:'883012774590', status:'completed', vpa:'rakesh.collect@ybl', payer:'Sanjay Bhosale', mobile:'9011256630', age:'0.2', gw:false}},
   {t:'✕ Edited amount', d:'₹12,500 claimed vs ₹1,250 due',
-   v:{amt:12500, exp:1250, utr:'559108234461', vpa:'@SELF', payer:'Amit Kore', mobile:'9146770231', age:'72', gw:false}},
+   v:{amt:12500, exp:1250, utr:'559108234461', status:'completed', vpa:'@SELF', payer:'Amit Kore', mobile:'9146770231', age:'72', gw:false}},
   {t:'✕ Payer identity mismatch', d:'Known number, new name',
-   v:{amt:2000, exp:2000, utr:'660192883047', vpa:'@SELF', payer:'Rahul Salunkhe', mobile:'9822014577', age:'0.2', gw:false}},
+   v:{amt:2000, exp:2000, utr:'660192883047', status:'completed', vpa:'@SELF', payer:'Rahul Salunkhe', mobile:'9822014577', age:'0.2', gw:false}},
   {t:'✓ First-time payer', d:'Unknown number, all clean',
-   v:{amt:1500, exp:1500, utr:'490273116628', vpa:'@SELF', payer:'Manisha Pawar', mobile:'8767445190', age:'0.2', gw:true}}
+   v:{amt:1500, exp:1500, utr:'490273116628', status:'completed', vpa:'@SELF', payer:'Manisha Pawar', mobile:'8767445190', age:'0.2', gw:true}},
+  {t:'✕ Pending payment', d:'Not settled — shown as paid',
+   v:{amt:6000, exp:6000, utr:'305118246770', status:'pending', vpa:'@SELF', payer:'Deepak Salvi', mobile:'9518220741', age:'0.2', gw:false}},
+  {t:'✕ Double claim', d:'Same payer, same amount again',
+   v:{amt:7500, exp:7500, utr:'711094326805', status:'completed', vpa:'@SELF', payer:'Amit Kore', mobile:'9146770231', age:'0.2', gw:false}}
 ];
 
 /* ================================================================
@@ -867,6 +930,7 @@ document.querySelectorAll('.sample-btn').forEach(b => {
     $('i-vpa').value = v.vpa === '@SELF' ? MERCHANT_VPA : v.vpa;
     $('i-payer').value = v.payer; $('i-age').value = v.age;
     $('i-mobile').value = v.mobile || '';
+    $('i-status').value = v.status || 'completed';
     $('i-gw').checked = v.gw;
     uploadedHash = null;
     clearFormError();
@@ -1002,6 +1066,22 @@ function parseUPIText(txt){
   const nm = flat.match(/\b(?:To|Paid to|Sent to|From)\s+([A-Z][A-Za-z.]*(?:\s+[A-Z][A-Za-z.]*){0,3})/);
   if(nm && !nm[1].includes('@')) out.payer = nm[1].trim();
 
+  /* Transaction status. A screenshot reading "Pending" or "Failed" being
+     presented as proof of payment is one of the most common real scams,
+     and it is plainly visible on the receipt. */
+  if(/\b(failed|unsuccessful|declined|cancelled)\b/i.test(flat))              out.status = 'failed';
+  else if(/\b(pending|processing|in progress|awaiting)\b/i.test(flat))        out.status = 'pending';
+  else if(/\b(completed|successful|success|paid|debited)\b/i.test(flat))      out.status = 'completed';
+
+  /* Structural marks a genuine app receipt carries. Their absence does not
+     prove a forgery — a tight crop loses them too — but several missing at
+     once is worth a look. */
+  out.hasTxnId   = /\b(?:upi\s*)?transaction\s*(?:id|ref)/i.test(flat)
+                || /\bUPI\s*Ref/i.test(flat) || /\bgoogle\s*transaction\s*id/i.test(flat);
+  out.hasBank    = /\b(hdfc|sbi|icici|axis|kotak|yes\s*bank|pnb|bob|idfc|indusind|canara|union\s*bank|bank)\b/i.test(flat);
+  out.hasAppMark = /\b(google\s*pay|gpay|phonepe|paytm|bhim|amazon\s*pay|upi)\b/i.test(flat);
+
+  out.raw = txt;
   return out;
 }
 
@@ -1026,7 +1106,10 @@ async function runOCR(blob){
       new Promise((_, r) => setTimeout(() => r(new Error('timeout')), OCR_TIMEOUT))
     ]);
     const got = parseUPIText(text || '');
+    got.ocrRan = true;
     lastParsed = got;
+    $('ocr-text').textContent = (text || '').trim() || '(no text found)';
+    $('ocr-raw').classList.remove('hidden');
 
     const filled = [];
     if(got.amount){ $('i-amt').value = got.amount; $('i-exp').value = got.amount; filled.push('amount'); markAuto('i-amt'); markAuto('i-exp'); }
@@ -1037,6 +1120,7 @@ async function runOCR(blob){
        what the proof claims against what history knows. */
     if(got.payer) { $('i-payer').value = got.payer;   filled.push('payer name');       markAuto('i-payer'); }
     if(got.mobile){ $('i-mobile').value = got.mobile; filled.push('mobile number');    markAuto('i-mobile'); onMobileEntered(); }
+    if(got.status){ $('i-status').value = got.status; filled.push('status'); }
 
     if(filled.length){
       setNote(`Auto-read ${filled.join(', ')} — please check against the image.`,
@@ -1071,6 +1155,8 @@ function clearFieldsForUpload(){
   $('i-age').value = '0.2';
   $('payer-note').classList.add('hidden');
   $('direction-note').classList.add('hidden');
+  $('ocr-raw').classList.add('hidden');
+  $('i-status').value = 'completed';
   $('upload-note').classList.remove('hidden');
   $('result').classList.add('hidden');
   $('result-empty').classList.remove('hidden');
@@ -1218,6 +1304,11 @@ $('run').onclick = () => {
     vpa:      $('i-vpa').value.trim(),
     payer:    $('i-payer').value.trim() || 'Unknown',
     mobile:   $('i-mobile').value.trim(),
+    status:   $('i-status').value,
+    ocrRan:   !!(lastParsed && lastParsed.ocrRan),
+    hasTxnId: !!(lastParsed && lastParsed.hasTxnId),
+    hasBank:  !!(lastParsed && lastParsed.hasBank),
+    hasAppMark:!!(lastParsed && lastParsed.hasAppMark),
     ageHours: +$('i-age').value,
     gateway:  $('i-gw').checked,
     hash:     uploadedHash
@@ -1228,7 +1319,7 @@ $('run').onclick = () => {
   /* record it so the NEXT submission of the same proof is caught */
   const primary = r.checks.filter(c => c.failed).sort((a,b) => b.weight - a.weight)[0];
   LEDGER.unshift({
-    date:'20 Aug', utr:t.utr, payer:t.payer, mobile:t.mobile, vpa:t.vpa, amount:t.amount,
+    date:'20 Aug', utr:t.utr, payer:t.payer, mobile:t.mobile, vpa:t.vpa, amount:t.amount, status:t.status,
     score:r.score, verdict:r.verdict,
     reason: primary ? primary.name : 'All checks passed',
     hash: t.hash
