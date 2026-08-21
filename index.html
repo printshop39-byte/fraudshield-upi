@@ -155,6 +155,11 @@
     background:var(--redbg);border:1px solid var(--red);color:var(--red);
     border-radius:9px;padding:10px 12px;font-size:12px;margin-bottom:11px;line-height:1.6
   }
+  .form-note{
+    background:rgba(139,124,246,.1);border:1px solid rgba(139,124,246,.45);color:var(--tx);
+    border-radius:9px;padding:11px 13px;font-size:12px;margin:12px 0 4px;line-height:1.65
+  }
+  .form-note b{color:var(--accent);display:block;margin-bottom:3px}
 
   .btn{
     width:100%;padding:12px;border:none;border-radius:9px;font-size:14px;font-weight:620;
@@ -377,7 +382,13 @@
           </div>
           <div class="samples" id="samples"></div>
 
-          <div class="card-t" style="margin:22px 0 12px">Step 2 — Extracted Fields <span style="text-transform:none;letter-spacing:0;color:var(--tx3);font-weight:400">(OCR output — editable)</span></div>
+          <div id="upload-note" class="form-note hidden">
+            <b>Screenshot loaded — now enter its details below.</b>
+            This prototype does not read text from the image yet, so type the amount,
+            reference number and payee UPI ID exactly as they appear in your screenshot.
+          </div>
+
+          <div class="card-t" style="margin:22px 0 12px">Step 2 — Payment Details <span style="text-transform:none;letter-spacing:0;color:var(--tx3);font-weight:400">(read these off the screenshot)</span></div>
           <div class="f-row">
             <div class="field"><label for="i-amt">Amount claimed (₹)</label><input id="i-amt" type="number" value="2500" inputmode="decimal"></div>
             <div class="field"><label for="i-exp">Amount expected (₹)</label><input id="i-exp" type="number" value="2500" inputmode="decimal"><small class="hint">What this customer actually owes you</small></div>
@@ -801,6 +812,7 @@ document.querySelectorAll('.sample-btn').forEach(b => {
     $('i-gw').checked = v.gw;
     uploadedHash = null;
     clearFormError();
+    $('upload-note').classList.add('hidden');
     $('prev').classList.add('hidden');
     $('drop').classList.remove('hidden');
   };
@@ -843,8 +855,22 @@ function loadImage(f){
     $('prev').src = URL.createObjectURL(blob);
     $('prev').classList.remove('hidden');
     drop.classList.add('hidden');
+    clearFieldsForUpload();
   };
   rd.readAsArrayBuffer(f);
+}
+
+/* A real screenshot must never be scored against leftover demo values.
+   The demo UTR is already in the ledger, so keeping it would flag a
+   genuine payment as a duplicate — the fields are cleared instead and
+   the operator is asked to read the real ones off the image. */
+function clearFieldsForUpload(){
+  ['i-amt','i-exp','i-utr','i-vpa','i-payer'].forEach(id => $(id).value = '');
+  $('i-age').value = '0.2';
+  $('upload-note').classList.remove('hidden');
+  $('result').classList.add('hidden');
+  $('result-empty').classList.remove('hidden');
+  $('i-amt').focus();
 }
 
 /* ---- validation ---- */
@@ -931,6 +957,7 @@ $('again').onclick = () => {
   $('result-empty').classList.remove('hidden');
   uploadedHash = null;
   clearFormError();
+  $('upload-note').classList.add('hidden');
   $('prev').classList.add('hidden');
   drop.classList.remove('hidden');
   $('i-utr').focus();
