@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FraudShield UPI Console</title>
-<meta name="description" content="Explainable fraud screening for UPI payment screenshots — twelve weighted rules produce an auditable risk verdict in under a second, entirely in your browser.">
-<meta name="theme-color" content="#0d0b14">
+<meta name="description" content="Check a scam message, a UPI ID or a payment screenshot — explainable fraud screening that runs entirely in your browser.">
+<meta name="theme-color" content="#0f172a">
 <link rel="canonical" href="https://printshop39-byte.github.io/fraudshield-upi/">
 <!-- Inline SVG favicon: no extra request, works offline. -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230d0b14'/><text x='50' y='72' font-size='62' text-anchor='middle'>%F0%9F%9B%A1%EF%B8%8F</text></svg>">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230d0b14'/><text x='50' y='72' font-size='62' text-anchor='middle'>%F0%9F%9B%A1%EF%B8%8F</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><text x='50' y='72' font-size='62' text-anchor='middle'>%F0%9F%9B%A1%EF%B8%8F</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><text x='50' y='72' font-size='62' text-anchor='middle'>%F0%9F%9B%A1%EF%B8%8F</text></svg>">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="FraudShield">
 <meta property="og:title" content="FraudShield UPI Console">
-<meta property="og:description" content="Explainable fraud screening for UPI payment screenshots — an auditable risk verdict in under a second, processed entirely in your browser.">
+<meta property="og:description" content="Check a scam message, a UPI ID or a payment screenshot — explainable fraud screening, processed entirely in your browser.">
 <meta property="og:url" content="https://printshop39-byte.github.io/fraudshield-upi/">
 <meta property="og:image" content="https://printshop39-byte.github.io/fraudshield-upi/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -22,7 +22,7 @@
 <meta property="og:image:alt" content="FraudShield — explainable fraud screening for UPI payment screenshots, showing its three verdicts: Verified Low Risk, Unable to Verify, and High Risk.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="FraudShield UPI Console">
-<meta name="twitter:description" content="Explainable fraud screening for UPI payment screenshots — an auditable risk verdict in under a second.">
+<meta name="twitter:description" content="Check a scam message, a UPI ID or a payment screenshot — explainable fraud screening.">
 <meta name="twitter:image" content="https://printshop39-byte.github.io/fraudshield-upi/og-image.png">
 <meta name="twitter:image:alt" content="FraudShield — explainable fraud screening for UPI payment screenshots.">
 
@@ -31,22 +31,21 @@
      FraudShield Prototype — College Demo Build
      Single-file app. Runs offline; webfonts fall back cleanly.
      ============================================================ */
-  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&display=swap');
 
   :root{
-    /* Ground: near-black carrying a violet bias, so the neutrals belong
-       to the accent rather than sitting under it as generic grey.       */
-    --bg:#0d0b14; --bg2:#12101f; --card:#161327; --card2:#1e1a33;
-    --line:#2a2545; --line2:#3a3260;
-    --tx:#edeaf7; --tx2:#a29dbf; --tx3:#6e6890;
-    /* Accent is violet and never semantic — state color stays separate. */
-    --accent:#8b7cf6; --accent2:#6d5de8;
-    --green:#34d399; --greenbg:rgba(52,211,153,.13);
-    --amber:#fbbf24; --amberbg:rgba(251,191,36,.13);
-    --red:#f87171;   --redbg:rgba(248,113,113,.13);
+    /* Deep Trust Slate ground with a cyan/indigo accent pair. */
+    --bg:#0f172a; --bg2:#141f38; --card:#1e293b; --card2:#273549;
+    --line:#334155; --line2:#415068;
+    --tx:#f1f5f9; --tx2:#94a3b8; --tx3:#64748b;
+    --accent:#38bdf8; --accent2:#6366f1;
+    /* Semantic state stays separate from the accent. */
+    --green:#10b981; --greenbg:rgba(16,185,129,.13);
+    --amber:#f59e0b; --amberbg:rgba(245,158,11,.13);
+    --red:#ef4444;   --redbg:rgba(239,68,68,.13);
     --radius:14px;
-    --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
-    --f-body:'Public Sans','Segoe UI',system-ui,-apple-system,'Noto Sans Devanagari',sans-serif;
+    --f-display:'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif;
+    --f-body:'Plus Jakarta Sans','Segoe UI',system-ui,-apple-system,'Noto Sans Devanagari',sans-serif;
     --f-mono:'IBM Plex Mono','Consolas','Courier New',monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -67,7 +66,7 @@
   .logo{display:flex;align-items:center;gap:10px;padding:0 8px 20px;border-bottom:1px solid var(--line);margin-bottom:14px}
   .logo-mark{
     width:34px;height:34px;border-radius:9px;flex-shrink:0;
-    background:linear-gradient(135deg,var(--accent),#6366f1);
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
     display:grid;place-items:center;font-size:17px
   }
   .logo-txt b{display:block;font-size:15px;letter-spacing:.2px}
@@ -275,6 +274,71 @@
   .preview{width:100%;border-radius:10px;border:1px solid var(--line2);margin-bottom:12px;max-height:230px;object-fit:contain;background:var(--bg)}
   .empty{text-align:center;padding:44px 20px;color:var(--tx3);font-size:13px}
 
+  /* ---------- Scanner modules ---------- */
+  .field textarea{
+    width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:8px;
+    padding:11px 12px;color:var(--tx);font-size:13.5px;font-family:inherit;
+    line-height:1.65;resize:vertical;min-height:110px
+  }
+  .field textarea:focus{outline:none;border-color:var(--accent)}
+  .field code{font-family:var(--f-mono);font-size:10.5px;color:var(--accent)}
+  .btn-row{display:flex;gap:9px;margin-top:11px}
+  .btn-row .btn{flex:1;padding:10px;font-size:12.5px;min-height:44px}
+
+  /* Circular risk meter */
+  .meter-wrap{position:relative;width:150px;height:150px;margin:6px auto 0}
+  .meter{width:150px;height:150px;transform:rotate(-90deg)}
+  .meter circle{fill:none;stroke-width:9;stroke-linecap:round}
+  .meter-track{stroke:var(--bg)}
+  .meter-fill{
+    stroke:var(--accent);stroke-dasharray:326.7;stroke-dashoffset:326.7;
+    transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1),stroke .4s
+  }
+  .meter-mid{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;pointer-events:none
+  }
+  .meter-mid b{font-family:var(--f-display);font-size:38px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .meter-mid span{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:1.2px;margin-top:3px}
+
+  /* Scanning animation while a scan runs */
+  @keyframes scanpulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .scanning .meter-fill{animation:scanpulse 1s ease-in-out infinite}
+
+  /* Chat bubble with marked-up text */
+  .chat-wrap{background:var(--bg);border-radius:12px;padding:14px}
+  .bubble{
+    background:var(--card2);border:1px solid var(--line2);border-radius:14px 14px 14px 4px;
+    padding:12px 14px;font-size:13px;line-height:1.75;white-space:pre-wrap;word-break:break-word;
+    max-width:96%
+  }
+  .bubble-meta{font-size:10.5px;color:var(--tx3);margin:7px 0 0 6px}
+  .flag{
+    border-radius:4px;padding:1px 3px;font-weight:600;cursor:help;
+    border-bottom:2px solid currentColor
+  }
+  .flag.hi{background:var(--redbg);color:var(--red)}
+  .flag.mid{background:var(--amberbg);color:var(--amber)}
+
+  /* Finding and action lists */
+  ul.why,ul.action{list-style:none;display:flex;flex-direction:column;gap:9px}
+  ul.why li,ul.action li{
+    display:flex;gap:9px;font-size:12.5px;line-height:1.65;color:var(--tx2);
+    background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px
+  }
+  ul.why li b,ul.action li b{color:var(--tx);display:block;margin-bottom:2px}
+  ul.why li .mk{flex-shrink:0;font-weight:700}
+  ul.why li.hi{border-color:rgba(239,68,68,.4)} ul.why li.hi .mk{color:var(--red)}
+  ul.why li.mid{border-color:rgba(245,158,11,.4)} ul.why li.mid .mk{color:var(--amber)}
+  ul.why li.ok{border-color:rgba(16,185,129,.35)} ul.why li.ok .mk{color:var(--green)}
+  ul.action li .mk{flex-shrink:0;color:var(--accent);font-weight:700}
+
+  /* Parsed key/value rows (QR intent, VPA parts) */
+  .kv{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .kv:last-child{border-bottom:none}
+  .kv .k{width:132px;flex-shrink:0;color:var(--tx3)}
+  .kv .v{color:var(--tx);font-family:var(--f-mono);font-size:11.5px;word-break:break-all}
+
   /* ---------- Phone overrides ----------
      These must sit LAST in the stylesheet: the base .f-row / .samples /
      .field rules are defined after the layout media query above, and with
@@ -303,6 +367,8 @@
     </div>
     <button class="nav-item active" data-view="dash" aria-current="page"><span class="ic" aria-hidden="true">▣</span> Dashboard</button>
     <button class="nav-item" data-view="verify"><span class="ic" aria-hidden="true">⚡</span> Verify Payment</button>
+    <button class="nav-item" data-view="message"><span class="ic" aria-hidden="true">✉</span> Message Scanner</button>
+    <button class="nav-item" data-view="vpa"><span class="ic" aria-hidden="true">◎</span> UPI ID &amp; QR Check</button>
     <button class="nav-item" data-view="ledger"><span class="ic" aria-hidden="true">☰</span> Transaction Ledger</button>
     <button class="nav-item" data-view="analytics"><span class="ic" aria-hidden="true">◫</span> Fraud Analytics</button>
     <button class="nav-item" data-view="about"><span class="ic" aria-hidden="true">◈</span> How It Works</button>
@@ -474,6 +540,139 @@
             <div class="card-t" style="margin-top:18px">Rule Engine Breakdown</div>
             <div id="checks"></div>
             <button class="btn ghost" id="again" style="margin-top:16px">↺ Verify another payment</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MESSAGE SCANNER ================= -->
+    <section class="view" id="v-message">
+      <div class="page-head">
+        <h1>Message Scanner</h1>
+        <p>Paste a suspicious WhatsApp or bank SMS — संशयास्पद मेसेज तपासा</p>
+      </div>
+
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-t">Step 1 — The Message</div>
+          <div class="field">
+            <label for="i-msg">Paste the message exactly as you received it</label>
+            <textarea id="i-msg" rows="7" placeholder="Dear customer, your electricity will be disconnected tonight at 9:30 pm…"></textarea>
+          </div>
+          <div class="btn-row">
+            <button class="btn ghost" id="msg-paste" type="button">📋 Paste from clipboard</button>
+            <button class="btn ghost" id="msg-clear" type="button">✕ Clear</button>
+          </div>
+
+          <div style="font-size:11px;color:var(--tx3);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">
+            Or try a real scam pattern
+          </div>
+          <div class="samples" id="msg-samples"></div>
+
+          <div class="field" style="margin-top:16px">
+            <label for="i-sender">Sender ID or number <span style="color:var(--tx3);font-weight:400">(optional)</span></label>
+            <input id="i-sender" placeholder="e.g. AD-SBIINB, or 9876543210">
+            <small class="hint">Real bank SMS comes from a 6-character sender ID, never a personal mobile number.</small>
+          </div>
+
+          <button class="btn" id="msg-run" type="button">🛡 Scan Message</button>
+        </div>
+
+        <div class="card">
+          <div class="card-t">Scan Result</div>
+          <div id="msg-empty" class="empty">
+            ⬅ Paste a message or load a sample,<br>then click <b>Scan Message</b>.
+          </div>
+          <div id="msg-result" class="hidden" role="status" aria-live="polite">
+            <div class="meter-wrap">
+              <svg class="meter" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="meter-track" cx="60" cy="60" r="52"></circle>
+                <circle class="meter-fill" id="msg-arc" cx="60" cy="60" r="52"></circle>
+              </svg>
+              <div class="meter-mid">
+                <b id="msg-score">0</b><span>risk</span>
+              </div>
+            </div>
+            <div class="verdict" id="msg-verdict" style="margin-top:14px">
+              <div class="vt" id="msg-title"></div>
+              <div class="vd" id="msg-desc"></div>
+            </div>
+
+            <div class="card-t" style="margin-top:20px">The Message, Marked Up</div>
+            <div class="chat-wrap"><div class="bubble" id="msg-bubble"></div>
+              <div class="bubble-meta" id="msg-meta"></div></div>
+
+            <div class="card-t" style="margin-top:20px">Why This Is Dangerous</div>
+            <ul class="why" id="msg-why"></ul>
+
+            <div class="card-t" style="margin-top:20px">Do This Now</div>
+            <ul class="action" id="msg-action"></ul>
+
+            <button class="btn ghost" id="msg-again" style="margin-top:16px">↺ Scan another message</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= UPI ID / QR CHECK ================= -->
+    <section class="view" id="v-vpa">
+      <div class="page-head">
+        <h1>UPI ID &amp; QR Check</h1>
+        <p>Check a UPI ID or a QR code's hidden instructions — UPI आयडी तपासा</p>
+      </div>
+
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-t">Step 1 — What To Check</div>
+          <div class="field">
+            <label for="i-vpa-in">UPI ID, or the text inside a QR code</label>
+            <input id="i-vpa-in" placeholder="name@okhdfcbank  ·  or  upi://pay?pa=…">
+            <small class="hint">Paste the UPI ID someone sent you, or the raw <code>upi://</code> text a QR scanner shows.</small>
+          </div>
+
+          <div style="font-size:11px;color:var(--tx3);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">
+            Or try an example
+          </div>
+          <div class="samples" id="vpa-samples"></div>
+
+          <button class="btn" id="vpa-run" type="button" style="margin-top:16px">🛡 Check This ID</button>
+
+          <div class="note" style="margin-top:16px">
+            <b>What this can and cannot tell you.</b>
+            It checks the bank handle against the official NPCI list and looks for impersonation
+            wording. It <b>cannot</b> confirm the ID exists or who owns it — no public service
+            allows that. Treat a clean result as "nothing suspicious found", not "verified safe".
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-t">Check Result</div>
+          <div id="vpa-empty" class="empty">
+            ⬅ Enter a UPI ID or QR text,<br>then click <b>Check This ID</b>.
+          </div>
+          <div id="vpa-result" class="hidden" role="status" aria-live="polite">
+            <div class="meter-wrap">
+              <svg class="meter" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="meter-track" cx="60" cy="60" r="52"></circle>
+                <circle class="meter-fill" id="vpa-arc" cx="60" cy="60" r="52"></circle>
+              </svg>
+              <div class="meter-mid"><b id="vpa-score">0</b><span>risk</span></div>
+            </div>
+            <div class="verdict" id="vpa-verdict" style="margin-top:14px">
+              <div class="vt" id="vpa-title"></div>
+              <div class="vd" id="vpa-desc"></div>
+            </div>
+
+            <div class="card-t" style="margin-top:20px">Breakdown</div>
+            <div id="vpa-parts"></div>
+
+            <div class="card-t" style="margin-top:20px">Findings</div>
+            <ul class="why" id="vpa-why"></ul>
+
+            <div class="card-t" style="margin-top:20px">Do This Now</div>
+            <ul class="action" id="vpa-action"></ul>
+
+            <button class="btn ghost" id="vpa-again" style="margin-top:16px">↺ Check another</button>
           </div>
         </div>
       </div>
@@ -1489,6 +1688,442 @@ function renderAnalytics(){
 $('rule-table').innerHTML = RULES.map(r => `
   <tr><td style="color:var(--tx)">${r.name}</td><td style="font-size:11.5px">${r.detects}</td>
   <td><b style="color:var(--red)">+${r.weight}</b></td></tr>`).join('');
+
+/* ================================================================
+   MODULE — Message Scanner
+
+   Heuristics for Indian WhatsApp and SMS fraud. Every rule carries the
+   pattern, why it matters, and what the reader should do — a score with
+   no explanation teaches nobody to spot the next one.
+   `sev: hi` = on its own strong enough to distrust the message.
+   ================================================================ */
+const SCAM_RULES = [
+  { id:'PIN_TO_RECEIVE', sev:'hi', weight:60, label:'UPI PIN asked to RECEIVE money',
+    re:/\b(?:enter|put|type|share|use)\b[^.]{0,40}\b(?:upi\s*)?pin\b|\bpin\b[^.]{0,30}\b(?:receive|refund|credit|cashback|get)\b/gi,
+    why:'A UPI PIN is only ever needed to SEND money. No genuine refund, cashback or credit will ask for it.',
+    act:'Never enter your UPI PIN to receive anything. If you already did, call your bank now and block UPI.' },
+
+  { id:'COLLECT_REQUEST', sev:'hi', weight:50, label:'Payment request framed as a refund',
+    re:/\b(?:accept|approve|authorise|authorize)\b[^.]{0,40}\b(?:request|collect)\b|\bcollect\s*request\b/gi,
+    why:'Approving a "collect request" debits your account. Scammers send one and call it a refund.',
+    act:'Decline the request. Money coming to you never needs your approval.' },
+
+  { id:'APK', sev:'hi', weight:55, label:'APK / app file download',
+    re:/\b[\w.-]+\.apk\b|\bdownload\s+(?:the\s+)?app\b[^.]{0,30}\b(?:link|below|here)\b/gi,
+    why:'Banking-fraud APKs read your SMS, steal OTPs and mirror your screen. No bank distributes an app over WhatsApp.',
+    act:'Do not install it. Get bank apps only from the Play Store or App Store.' },
+
+  { id:'REMOTE_APP', sev:'hi', weight:55, label:'Remote-access app named',
+    re:/\b(?:anydesk|any\s*desk|teamviewer|team\s*viewer|quicksupport|quick\s*support|rustdesk|airdroid|screen\s*share)\b/gi,
+    why:'These let the caller see and control your phone, including your banking apps and OTPs.',
+    act:'Never install a remote-access app for anyone who called you. Uninstall it if you already did.' },
+
+  { id:'SHORTENER', sev:'hi', weight:40, label:'Shortened or throwaway link',
+    re:/\b(?:bit\.ly|tinyurl\.com|t\.me|rb\.gy|cutt\.ly|is\.gd|shorturl\.at|rebrand\.ly|surl\.li|linktr\.ee)\/\S*/gi,
+    why:'A shortener hides where the link really goes. Banks and government departments never use them.',
+    act:'Do not open the link. If you must reach the bank, type its address yourself.' },
+
+  { id:'URGENCY', sev:'mid', weight:25, label:'Artificial urgency',
+    re:/\b(?:within\s*\d+\s*(?:hour|hrs|hours|minute|min)|today\s*night|tonight|immediately|urgent(?:ly)?|last\s*(?:warning|chance)|before\s*\d{1,2}\s*(?:pm|am)|expir(?:e|es|ing|ed))\b/gi,
+    why:'Panic is the tool. A deadline stops you checking with anyone before you act.',
+    act:'Slow down. No real bank or utility settles anything in the next thirty minutes.' },
+
+  { id:'THREAT', sev:'mid', weight:30, label:'Threat of disconnection, blocking or police',
+    /* "SMS BLOCK UPI to 5676712" is a bank telling you how to protect yourself,
+       not a threat. A blocking word only counts when the thing being blocked is
+       named just before it, inside the same sentence. */
+    re:/\b(?:disconnect(?:ed|ion)?|deactivat(?:e|ed|ion)|f\.?i\.?r\.?|legal\s*action|court\s*(?:case|notice)|arrest(?:ed)?|penalty)\b|\b(?:account|a\/c|card|sim|connection|service|number)\b[^.]{0,24}\b(?:block(?:ed)?|suspend(?:ed)?|clos(?:e|ed|ure))\b/gi,
+    why:'Threats push you to act first and think later. Real notices arrive by post or the official app, not WhatsApp.',
+    act:'Do not respond. Check your account in the official app, or visit the branch or office yourself.' },
+
+  { id:'KYC_BAIT', sev:'mid', weight:30, label:'KYC / account-update bait',
+    re:/\b(?:k\.?y\.?c\.?|re[-\s]?kyc|update\s*(?:your\s*)?(?:kyc|pan|aadha?ar|account|details)|pan\s*card\s*update|account\s*(?:will\s*be\s*)?(?:blocked|closed))\b/gi,
+    why:'"Complete your KYC" is the most common banking-fraud opener in India.',
+    act:'Banks do not collect KYC over a link or a call. Use the branch or the official app only.' },
+
+  { id:'REWARD_BAIT', sev:'mid', weight:25, label:'Reward, lottery or cashback bait',
+    re:/\b(?:reward\s*points?|redeem|cashback|lucky\s*draw|lottery|you\s*(?:have\s*)?won|prize|gift\s*(?:card|voucher)|bonus\s*(?:points?|amount))\b/gi,
+    why:'Expiring reward points and surprise winnings exist to get you onto a fake page in a hurry.',
+    act:'Check any reward balance inside the official app. Ignore the message.' },
+
+  { id:'JOB_SCAM', sev:'mid', weight:30, label:'Part-time job or task scam',
+    re:/\b(?:part[\s-]?time\s*job|work\s*from\s*home|daily\s*(?:income|earning|payout)|per\s*task|prepaid\s*task|task\s*complete|join\s*(?:our\s*)?telegram|telegram\s*(?:group|channel)|earn\s*(?:rs\.?|₹)\s*\d)/gi,
+    why:'Task scams pay small amounts first, then ask for a deposit to unlock a bigger one. The deposit is the scam.',
+    act:'Leave the group. Never pay to be paid.' },
+
+  { id:'CALL_NUMBER', sev:'mid', weight:20, label:'Asks you to call a number',
+    /* Must be a whole 10-digit mobile. Without the boundaries a toll-free
+       number like 18002026161 yields a valid-looking 8002026161. */
+    re:/\b(?:call|contact|dial|whats?app|ring)\b[^.]{0,26}(?:\+?91[\s-]?)?(?<!\d)[6-9]\d{4}[\s-]?\d{5}(?!\d)/gi,
+    why:"Getting you on a call is how the pressure starts. The number is theirs, not the bank's.",
+    act:'Do not dial it. Use the number printed on your card or the official website.' },
+
+  { id:'UTILITY', sev:'mid', weight:25, label:'Electricity / utility disconnection',
+    re:/\b(?:electricity|power\s*supply|meter|bill)\b[^.]{0,50}\b(?:disconnect|cut|stop|due)\b|\b(?:mseb|msedcl|bses|tneb)\b/gi,
+    why:'The electricity-disconnection message is a mass-run scam across India.',
+    act:'Check your bill in the official utility app or on your last paper bill. Do not use their number.' },
+
+  { id:'PERSONAL_DATA', sev:'hi', weight:45, label:'Asks for OTP, CVV, card or password',
+    /* Matches a request, not a mention. "123456 is your OTP, do not share it"
+       is the bank doing its job; the guard keeps that out. */
+    re:/\b(?:share|send|tell|give|provide|enter|type|forward|confirm|submit)\b[^.]{0,32}\b(?:o\.?t\.?p\.?|c\.?v\.?v\.?|card\s*number|debit\s*card|credit\s*card|expiry|password|net\s*banking(?:\s*(?:id|password))?|mpin)\b|\b(?:o\.?t\.?p\.?|c\.?v\.?v\.?|mpin|password)\b[^.]{0,24}\b(?:share|send|tell|give|provide)\b/gi,
+    guard:t => /\b(?:do\s*not|don'?t|never)\s+(?:share|disclose|reveal)\b/i.test(t)
+             && /\b(?:is\s+your|your)\s+(?:o\.?t\.?p|one[\s-]?time)/i.test(t),
+    why:'No bank employee will ever ask for these. Anyone who does is stealing from you.',
+    act:'Share nothing. End the conversation.' },
+
+  { id:'SHOUTING', sev:'mid', weight:10, label:'All-caps or heavy punctuation',
+    re:/\b[A-Z]{6,}\b|!{2,}/g,
+    why:'Bulk scam templates shout. Official messages do not.',
+    act:'Treat loud formatting as one more reason to slow down.' }
+];
+
+/* Real bank SMS arrives from a 6-character alphanumeric sender ID behind a
+   2-letter operator prefix — AD-SBIINB, VM-HDFCBK. A 10-digit mobile number
+   claiming to be a bank is decisive on its own. */
+function checkSender(raw){
+  const v = (raw || '').trim();
+  if(!v) return null;
+  if(/^(?:\+?91)?[6-9]\d{9}$/.test(v.replace(/[\s-]/g,'')))
+    return {sev:'hi', weight:45, label:'Bank message from a personal mobile number',
+      why:`Banks send SMS from a 6-character sender ID such as AD-SBIINB. "${v}" is an ordinary mobile number.`,
+      act:'Treat the message as fake. Real bank alerts never come from a personal number.'};
+  if(/^[A-Za-z]{2}-[A-Za-z0-9]{6}$/.test(v))
+    return {sev:'ok', label:'Sender ID matches the standard bank format',
+      why:`"${v}" follows the operator-prefix format Indian banks use. The format alone does not prove who sent it.`,
+      act:''};
+  return {sev:'mid', weight:20, label:'Unusual sender ID',
+    why:`"${v}" does not match the 2-letter prefix plus 6-character format banks use.`,
+    act:'Compare it against an older SMS from the same bank.'};
+}
+
+const MSG_SAMPLES = [
+  {t:'⚡ Electricity disconnect', d:'The classic mass-run scam', sender:'9021447785',
+   body:`Dear Consumer, your electricity power will be DISCONNECTED tonight at 9:30 PM because your previous month bill was not updated. Please immediately contact our officer 9021447785 to avoid disconnection. - MSEB`},
+  {t:'🏦 SBI rewards expiring', d:'Reward bait plus an APK', sender:'9871200345',
+   body:`Dear SBI Customer, your reward points worth Rs.6,850 are expiring TODAY. Redeem now by downloading SBI-Rewards.apk from http://bit.ly/sbi-redeem and update your KYC. Points once expired cannot be recovered!!`},
+  {t:'💼 Telegram task job', d:'Part-time job / task scam', sender:'',
+   body:`Hello! Congratulations, you are selected for a part time job. Daily income Rs.3000-8000 from home. Just complete simple tasks. Join our telegram group t.me/dailyearn_task now and start earning today.`},
+  {t:'💸 UPI refund request', d:'Collect request sold as a refund', sender:'',
+   body:`Sir your order was cancelled, refund of Rs.4,500 is initiated. To receive the refund please accept the payment request in your GPay and enter your UPI PIN to confirm the credit. Call 8899221100 if not received in 10 min.`}
+];
+
+function scanMessage(text, sender){
+  const hits = [], ranges = [];
+  for(const r of SCAM_RULES){
+    if(r.guard && r.guard(text)) continue;   // legitimate context — do not fire
+    r.re.lastIndex = 0;
+    const found = [...text.matchAll(r.re)];
+    if(!found.length) continue;
+    hits.push({...r, count:found.length, sample:found[0][0]});
+    found.forEach(m => ranges.push({start:m.index, end:m.index + m[0].length, sev:r.sev, label:r.label}));
+  }
+  const senderCheck = checkSender(sender);
+  let score = hits.reduce((s, h) => s + h.weight, 0);
+  if(senderCheck && senderCheck.weight) score += senderCheck.weight;
+  score = Math.min(100, score);
+  const level = score >= 50 ? 'RED' : score >= 20 ? 'YELLOW' : 'GREEN';
+  return {score, level, hits, senderCheck, ranges};
+}
+
+/* Merge overlapping matches, worst severity wins, then escape and wrap. */
+function markupMessage(text, ranges){
+  if(!ranges.length) return esc(text);
+  const sorted = [...ranges].sort((a,b) => a.start - b.start || b.end - a.end);
+  const merged = [];
+  for(const r of sorted){
+    const last = merged[merged.length - 1];
+    if(last && r.start <= last.end){
+      last.end = Math.max(last.end, r.end);
+      if(r.sev === 'hi') last.sev = 'hi';
+      if(!last.label.includes(r.label)) last.label += ' · ' + r.label;
+    }else merged.push({...r});
+  }
+  let out = '', cur = 0;
+  for(const m of merged){
+    out += esc(text.slice(cur, m.start));
+    out += `<span class="flag ${m.sev}" title="${esc(m.label)}">${esc(text.slice(m.start, m.end))}</span>`;
+    cur = m.end;
+  }
+  return out + esc(text.slice(cur));
+}
+
+const MSG_VERDICT = {
+  GREEN : {t:'Nothing Suspicious Found', d:'None of the known scam patterns appear here. That is not the same as safe — a well-written scam can still pass. Verify anything involving money independently.'},
+  YELLOW: {t:'Caution — Treat With Suspicion', d:'Several pressure tactics common to scam messages appear here. Do not act on this message before checking through an official channel.'},
+  RED   : {t:'Critical Danger — Do Not Act On This', d:'This carries the hallmarks of an active fraud attempt. Do not click, call, install or pay anything it asks for.'}
+};
+
+/* ================================================================
+   MODULE — UPI ID and QR check
+   ================================================================ */
+const NPCI_HANDLES = {
+  okhdfcbank:'HDFC Bank (Google Pay)', okicici:'ICICI Bank (Google Pay)',
+  oksbi:'State Bank of India (Google Pay)', okaxis:'Axis Bank (Google Pay)',
+  ybl:'Yes Bank (PhonePe)', ibl:'IDBI Bank (PhonePe)', axl:'Axis Bank (PhonePe)',
+  paytm:'Paytm Payments Bank', ptaxis:'Paytm (Axis)', ptsbi:'Paytm (SBI)',
+  ptyes:'Paytm (Yes Bank)', pthdfc:'Paytm (HDFC)',
+  apl:'Amazon Pay', yapl:'Amazon Pay (Yes Bank)',
+  upi:'BHIM', jio:'Jio Payments Bank', airtel:'Airtel Payments Bank',
+  fbl:'Freecharge', ikwik:'MobiKwik', slc:'Slice', jupiteraxis:'Jupiter (Axis)',
+  waaxis:'WhatsApp Pay (Axis)', waicici:'WhatsApp Pay (ICICI)',
+  wasbi:'WhatsApp Pay (SBI)', wahdfcbank:'WhatsApp Pay (HDFC)',
+  hdfcbank:'HDFC Bank', sbi:'State Bank of India', icici:'ICICI Bank',
+  axisbank:'Axis Bank', kotak:'Kotak Mahindra Bank', yesbank:'Yes Bank',
+  pnb:'Punjab National Bank', barodampay:'Bank of Baroda', cnrb:'Canara Bank',
+  unionbank:'Union Bank of India', uboi:'Union Bank', idfcbank:'IDFC First Bank',
+  indianbank:'Indian Bank', rbl:'RBL Bank', federal:'Federal Bank',
+  indus:'IndusInd Bank', kbl:'Karnataka Bank', dbs:'DBS Bank', abfspay:'Aditya Birla'
+};
+
+/* Words that turn a personal UPI ID into something that sounds official. */
+const IMPERSONATION = ['refund','support','helpline','customercare','customer-care','care',
+  'kyc','verify','verification','official','service','helpdesk','recovery','claim',
+  'cashback','reward','bank','rbi','npci','govt','government','police','update'];
+
+function checkVPA(raw){
+  const input = (raw || '').trim();
+  if(!input) return null;
+  const out = {input, parts:[], findings:[], actions:[], score:0, isQR:false};
+
+  let vpa = input;
+  /* A QR is just this text. Pull the payee and the instructions out of it. */
+  if(/^upi:\/\//i.test(input)){
+    out.isQR = true;
+    let q = {};
+    try{ q = Object.fromEntries(new URLSearchParams(input.split('?')[1] || '')); }catch(e){}
+    vpa = q.pa || '';
+    out.parts.push(['Payee UPI ID', vpa || '— not present —']);
+    if(q.pn) out.parts.push(['Payee name shown', q.pn]);
+    if(q.am) out.parts.push(['Amount pre-filled', '₹' + q.am]);
+    if(q.tn) out.parts.push(['Note', q.tn]);
+    if(q.mc) out.parts.push(['Merchant category', q.mc]);
+
+    out.findings.push({sev:'mid', mk:'!', t:'A QR code can only send money, never receive it',
+      d:'Scanning this opens a payment FROM you. Anyone telling you to scan a code to receive a refund is taking money, not giving it.'});
+    out.score += 20;
+
+    if(q.am){
+      out.findings.push({sev:'hi', mk:'✕', t:`Amount is pre-filled at ₹${q.am}`,
+        d:'The sum is baked into the code, so it will not be obvious you chose it. Genuine person-to-person codes leave the amount blank.'});
+      out.score += 30;
+      out.actions.push('Check the amount on the confirmation screen before you approve anything.');
+    }
+    if(q.tn && /refund|cashback|reward|prize|claim|verify/i.test(q.tn)){
+      out.findings.push({sev:'hi', mk:'✕', t:'The note claims this is a refund or reward',
+        d:`"${q.tn}" — a payment note cannot turn a debit into a credit. This is money leaving your account.`});
+      out.score += 30;
+    }
+    if(q.url){
+      out.findings.push({sev:'hi', mk:'✕', t:'The code carries a web link',
+        d:'A payment code has no reason to send you to a website.'});
+      out.score += 25;
+    }
+    if(!vpa){
+      out.findings.push({sev:'hi', mk:'✕', t:'No payee UPI ID in the code',
+        d:'A valid payment code must name who is being paid. This one does not.'});
+      out.score += 40;
+    }
+  }
+
+  if(vpa){
+    const m = vpa.match(/^([a-zA-Z0-9._-]{2,256})@([a-zA-Z][a-zA-Z0-9.]{1,63})$/);
+    if(!m){
+      out.findings.push({sev:'hi', mk:'✕', t:'Not a valid UPI ID',
+        d:`"${vpa}" is not in the form name@bankhandle.`});
+      out.score += 45;
+    }else{
+      const local = m[1], handle = m[2], h = handle.toLowerCase();
+      out.parts.push(['Name part', local], ['Bank handle', '@' + handle]);
+
+      if(NPCI_HANDLES[h]){
+        out.findings.push({sev:'ok', mk:'✓', t:`Handle @${h} is a real NPCI handle`,
+          d:`Operated by ${NPCI_HANDLES[h]}. The handle being genuine says nothing about who owns this particular ID.`});
+        out.parts.push(['Handle belongs to', NPCI_HANDLES[h]]);
+      }else{
+        out.findings.push({sev:'hi', mk:'✕', t:`@${h} is not on the NPCI handle list`,
+          d:'Every real UPI ID ends in a handle issued to a bank or payment app. An unrecognised one is either a typo or fabricated.'});
+        out.score += 45;
+        out.actions.push('Ask the person to send the ID again from inside their UPI app.');
+      }
+
+      const found = IMPERSONATION.filter(w => local.toLowerCase().includes(w));
+      if(found.length){
+        out.findings.push({sev:'hi', mk:'✕', t:`Name part contains "${found.join('", "')}"`,
+          d:'Banks and payment apps never collect money into an ID that reads like a support desk. This wording exists to make a personal account look official.'});
+        out.score += 40;
+        out.actions.push('Do not pay this ID. No refund or KYC process ever needs you to send money.');
+      }
+      if(/^\d{6,}$/.test(local)){
+        out.findings.push({sev:'mid', mk:'!', t:'Name part is only digits',
+          d:'Common for genuine phone-linked IDs, but it tells you nothing about who owns it.'});
+        out.score += 10;
+      }
+    }
+  }
+
+  out.score = Math.min(100, out.score);
+  out.level = out.score >= 50 ? 'RED' : out.score >= 20 ? 'YELLOW' : 'GREEN';
+  if(!out.actions.length)
+    out.actions.push('Confirm the name shown on the payment screen matches who you expect before approving.');
+  out.actions.push('Never enter your UPI PIN to receive money — a PIN only ever sends it.');
+  return out;
+}
+
+const VPA_SAMPLES = [
+  {t:'✓ Ordinary personal ID', d:'Real handle, plain name', v:'ramesh.patil@okhdfcbank'},
+  {t:'✕ Impersonation wording', d:'"refund" in the name', v:'refund-support@okaxis'},
+  {t:'✕ Fake bank handle', d:'Handle not issued by NPCI', v:'sbi.helpline@sbibank'},
+  {t:'✕ QR with hidden amount', d:'Sold as a refund, debits you',
+   v:'upi://pay?pa=claim.refund@ybl&pn=SBI%20Refund%20Cell&am=4999&cu=INR&tn=Refund%20credit%20verification'}
+];
+
+/* ================================================================
+   Scanner UI
+   ================================================================ */
+const METER_LEN = 326.7;
+let meterTimers = {};
+/* The count-up is decoration; the number itself is not. requestAnimationFrame
+   stalls in a backgrounded tab, which used to leave a wrong figure frozen
+   under a correctly drawn ring — so the final value is always written, and
+   the tween is skipped entirely when reduced motion is requested. */
+function setMeter(arcId, scoreId, score, level){
+  const arc = $(arcId), out = $(scoreId);
+  const col = level === 'RED' ? 'var(--red)' : level === 'YELLOW' ? 'var(--amber)' : 'var(--green)';
+  arc.style.stroke = col;
+  out.style.color = col;
+  clearInterval(meterTimers[scoreId]);
+
+  /* A timer, not requestAnimationFrame: rAF is paused in a backgrounded tab,
+     which would leave the ring drawn empty under a correct number. */
+  arc.style.strokeDashoffset = METER_LEN;
+  setTimeout(() => { arc.style.strokeDashoffset = METER_LEN * (1 - score / 100); }, 40);
+
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches || score === 0){
+    out.textContent = score;
+    return;
+  }
+  let shown = 0;
+  const stepSize = Math.max(1, Math.ceil(score / 18));
+  meterTimers[scoreId] = setInterval(() => {
+    shown = Math.min(score, shown + stepSize);
+    out.textContent = shown;
+    if(shown >= score){ clearInterval(meterTimers[scoreId]); out.textContent = score; }
+  }, 28);
+  /* Backstop: whatever the tween managed, the right number ends up on screen. */
+  setTimeout(() => { clearInterval(meterTimers[scoreId]); out.textContent = score; }, 900);
+}
+
+/* ---- message scanner ---- */
+$('msg-samples').innerHTML = MSG_SAMPLES.map((s,i) =>
+  `<button class="sample-btn" type="button" data-i="${i}"><b>${esc(s.t)}</b><span>${esc(s.d)}</span></button>`).join('');
+document.querySelectorAll('#msg-samples .sample-btn').forEach(b => {
+  b.onclick = () => {
+    const s = MSG_SAMPLES[+b.dataset.i];
+    $('i-msg').value = s.body; $('i-sender').value = s.sender;
+    $('msg-result').classList.add('hidden'); $('msg-empty').classList.remove('hidden');
+  };
+});
+function showMsgHint(m){ $('i-msg').placeholder = m; }
+$('msg-paste').onclick = async () => {
+  try{
+    const t = await navigator.clipboard.readText();
+    if(t) $('i-msg').value = t; else showMsgHint('Clipboard is empty.');
+  }catch(e){ showMsgHint('Your browser would not share the clipboard — paste with Ctrl+V instead.'); }
+};
+$('msg-clear').onclick = () => {
+  $('i-msg').value = ''; $('i-sender').value = '';
+  $('msg-result').classList.add('hidden'); $('msg-empty').classList.remove('hidden');
+};
+$('msg-again').onclick = () => {
+  $('msg-result').classList.add('hidden'); $('msg-empty').classList.remove('hidden'); $('i-msg').focus();
+};
+
+$('msg-run').onclick = () => {
+  const text = $('i-msg').value.trim();
+  if(!text){ showMsgHint('Paste a message here first, or load one of the samples below.'); $('i-msg').focus(); return; }
+  const r = scanMessage(text, $('i-sender').value);
+
+  $('msg-empty').classList.add('hidden');
+  $('msg-result').classList.remove('hidden');
+  $('msg-result').classList.add('scanning');
+  setTimeout(() => $('msg-result').classList.remove('scanning'), 700);
+
+  setMeter('msg-arc', 'msg-score', r.score, r.level);
+  const vt = MSG_VERDICT[r.level];
+  $('msg-verdict').className = 'verdict ' + r.level;
+  $('msg-title').textContent = vt.t;
+  $('msg-desc').textContent = vt.d;
+
+  $('msg-bubble').innerHTML = markupMessage(text, r.ranges);
+  const flagged = r.ranges.length;
+  $('msg-meta').textContent = flagged
+    ? `${flagged} phrase${flagged > 1 ? 's' : ''} flagged — hover any highlight to see why`
+    : 'No known scam phrases matched';
+
+  const sc = r.senderCheck;
+  const items = r.hits.map(h =>
+    `<li class="${h.sev}"><span class="mk">${h.sev === 'hi' ? '✕' : '!'}</span>
+      <div><b>${esc(h.label)}</b>${esc(h.why)}
+      <div style="margin-top:5px;color:var(--tx3);font-size:11.5px">Matched: “${esc(h.sample.slice(0,60))}”</div></div></li>`);
+  if(sc) items.unshift(
+    `<li class="${sc.sev}"><span class="mk">${sc.sev === 'hi' ? '✕' : sc.sev === 'ok' ? '✓' : '!'}</span>
+      <div><b>${esc(sc.label)}</b>${esc(sc.why)}</div></li>`);
+  $('msg-why').innerHTML = items.length ? items.join('')
+    : `<li class="ok"><span class="mk">✓</span><div><b>No known scam pattern matched</b>This message does not use the phrasing fraud templates rely on. Judge it on its own merits too.</div></li>`;
+
+  const acts = [...new Set(r.hits.map(h => h.act).concat(sc && sc.act ? [sc.act] : []))];
+  if(!acts.length) acts.push('Nothing here needs action. Still verify independently before sending money to anyone.');
+  acts.push('Report fraud on the national cybercrime helpline 1930, or at cybercrime.gov.in');
+  $('msg-action').innerHTML = acts.map(a => `<li><span class="mk">→</span><div>${esc(a)}</div></li>`).join('');
+};
+
+/* ---- UPI ID / QR ---- */
+$('vpa-samples').innerHTML = VPA_SAMPLES.map((s,i) =>
+  `<button class="sample-btn" type="button" data-i="${i}"><b>${esc(s.t)}</b><span>${esc(s.d)}</span></button>`).join('');
+document.querySelectorAll('#vpa-samples .sample-btn').forEach(b => {
+  b.onclick = () => {
+    $('i-vpa-in').value = VPA_SAMPLES[+b.dataset.i].v;
+    $('vpa-result').classList.add('hidden'); $('vpa-empty').classList.remove('hidden');
+  };
+});
+$('vpa-again').onclick = () => {
+  $('vpa-result').classList.add('hidden'); $('vpa-empty').classList.remove('hidden'); $('i-vpa-in').focus();
+};
+
+const VPA_VERDICT = {
+  GREEN : {t:'Nothing Suspicious Found', d:'The handle is genuine and the name carries no impersonation wording. This does not confirm who owns the ID — no public service can.'},
+  YELLOW: {t:'Caution — Check Before Paying', d:'Something here needs a second look before you send money.'},
+  RED   : {t:'High Risk — Do Not Pay This', d:'This ID or code shows the markings of a fraud collection account.'}
+};
+
+$('vpa-run').onclick = () => {
+  const r = checkVPA($('i-vpa-in').value);
+  if(!r){ $('i-vpa-in').placeholder = 'Enter a UPI ID or upi:// text first.'; $('i-vpa-in').focus(); return; }
+
+  $('vpa-empty').classList.add('hidden');
+  $('vpa-result').classList.remove('hidden');
+  $('vpa-result').classList.add('scanning');
+  setTimeout(() => $('vpa-result').classList.remove('scanning'), 700);
+
+  setMeter('vpa-arc', 'vpa-score', r.score, r.level);
+  const vt = VPA_VERDICT[r.level];
+  $('vpa-verdict').className = 'verdict ' + r.level;
+  $('vpa-title').textContent = vt.t;
+  $('vpa-desc').textContent = vt.d;
+
+  $('vpa-parts').innerHTML = r.parts.length
+    ? r.parts.map(p => `<div class="kv"><div class="k">${esc(p[0])}</div><div class="v">${esc(p[1])}</div></div>`).join('')
+    : `<div class="empty" style="padding:18px">Nothing could be parsed out of that input.</div>`;
+
+  $('vpa-why').innerHTML = r.findings.length
+    ? r.findings.map(f => `<li class="${f.sev}"><span class="mk">${f.mk}</span>
+        <div><b>${esc(f.t)}</b>${esc(f.d)}</div></li>`).join('')
+    : `<li class="ok"><span class="mk">✓</span><div><b>Nothing flagged</b>No impersonation wording and a recognised handle.</div></li>`;
+
+  $('vpa-action').innerHTML = [...new Set(r.actions)]
+    .map(a => `<li><span class="mk">→</span><div>${esc(a)}</div></li>`).join('');
+};
 
 renderDash();
 </script>

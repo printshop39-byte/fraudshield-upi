@@ -1,8 +1,9 @@
-# FraudShield — UPI Payment Fraud Detection
+# FraudShield — UPI Fraud Detection
 
-A working prototype of a fraud-screening engine for **UPI payment screenshots** sent over
-WhatsApp. Built as a single self-contained HTML file — no build step, no server, no
-`package.json`. Your screenshot is read in the browser and is **never uploaded anywhere**.
+A working prototype that screens the three things Indian UPI fraud actually arrives as: a
+**scam message**, a **UPI ID or QR code**, and a **payment screenshot**. Built as a single
+self-contained HTML file — no build step, no server, no `package.json`. Everything you paste
+or upload is read in the browser and is **never sent anywhere**.
 
 > ### ▶ [Live demo — printshop39-byte.github.io/fraudshield-upi](https://printshop39-byte.github.io/fraudshield-upi/)
 >
@@ -32,7 +33,19 @@ handling forty payments a day.
 
 ---
 
-## What this prototype does
+## Three checks in one place
+
+| Module | Answers |
+|---|---|
+| **Message Scanner** | Is this WhatsApp or SMS a scam? 14 heuristics for Indian fraud — UPI-PIN-to-receive, APK links, remote-access apps, KYC and reward bait, task-job scams, spoofed sender IDs |
+| **UPI ID & QR Check** | Is this UPI ID safe to pay? Validates the handle against the NPCI list, flags impersonation wording, and parses `upi://` QR text for pre-filled amounts |
+| **Verify Payment** | Is this payment screenshot genuine? 12 weighted rules over OCR-read fields |
+
+Every module scores 0–100, explains each finding in plain language, and ends with what to do next. Nothing is uploaded — all of it runs in the browser.
+
+---
+
+## What the payment verifier does
 
 Feed it a payment claim — a screenshot plus the extracted fields — and it returns an
 **explainable risk verdict** in under a second.
