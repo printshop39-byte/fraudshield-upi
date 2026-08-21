@@ -399,10 +399,13 @@
           </div>
           <div class="samples" id="samples"></div>
 
+          <!-- Placeholder only: runOCR() replaces this the moment an image loads.
+               Kept in sync with the "reading" state so the brief flash before the
+               reader starts never contradicts what the app actually does. -->
           <div id="upload-note" class="form-note hidden">
-            <b>Screenshot loaded — now enter its details below.</b>
-            This prototype does not read text from the image yet, so type the amount,
-            reference number and payee UPI ID exactly as they appear in your screenshot.
+            <b>Screenshot loaded — reading it now.</b>
+            Trying to pull the amount, reference number and UPI ID out of the image.
+            You can start typing them yourself instead — this never blocks you.
           </div>
 
           <div class="card-t" style="margin:22px 0 12px">Step 2 — Payment Details <span style="text-transform:none;letter-spacing:0;color:var(--tx3);font-weight:400">(read these off the screenshot)</span></div>
@@ -647,25 +650,38 @@
 const DEFAULT_MERCHANT_VPA = 'sukhada.collect@okaxis';
 let MERCHANT_VPA = DEFAULT_MERCHANT_VPA;
 
+/* ---------- Time ----------
+   Ledger entries carry a real timestamp. Rules R1 and R2 claim a 90-day
+   lookback; without a timestamp that claim was decorative, and every
+   saved row was stamped with a hard-coded date that never advanced. */
+const DAY = 86400000;
+const RETENTION_DAYS = 90;
+const daysAgo = n => Date.now() - n * DAY;
+const fmtDate = ts => new Date(ts).toLocaleDateString('en-IN',
+                        {day:'numeric', month:'short'});
+/* Entries inside the retention window — what the rules are allowed to see. */
+const recentLedger = () => LEDGER.filter(x => Date.now() - x.ts <= RETENTION_DAYS * DAY);
+
+
 /* ---------- Rule definitions ----------
    Each rule returns true when the FRAUD CONDITION is present.
    Weight = how many risk points that condition adds.            */
 const RULES = [
   { id:'R1', name:'UTR reuse detection', weight:60,
     detects:'Same reference number claimed twice',
-    test:t => LEDGER.some(x => x.utr === t.utr),
+    test:t => recentLedger().some(x => x.utr === t.utr),
     msg:t => {
-      const p = LEDGER.find(x => x.utr === t.utr);
-      return `Reference ${t.utr} was already submitted on ${p.date} by ${p.payer}.`;
+      const p = recentLedger().find(x => x.utr === t.utr);
+      return `Reference ${t.utr} was already submitted on ${fmtDate(p.ts)} by ${p.payer}.`;
     },
-    ok:'Reference number is unique — not seen in the last 90 days.' },
+    ok:`Reference number is unique — not seen in the last ${RETENTION_DAYS} days.` },
 
   { id:'R2', name:'Exact file duplicate', weight:55,
     detects:'Identical image file forwarded again',
-    test:t => !!t.hash && LEDGER.some(x => x.hash === t.hash),
+    test:t => !!t.hash && recentLedger().some(x => x.hash === t.hash),
     msg:t => {
-      const p = LEDGER.find(x => x.hash === t.hash);
-      return `Byte-identical file was already submitted on ${p.date} by ${p.payer} — this is a forwarded copy, not a new payment.`;
+      const p = recentLedger().find(x => x.hash === t.hash);
+      return `Byte-identical file was already submitted on ${fmtDate(p.ts)} by ${p.payer} — this is a forwarded copy, not a new payment.`;
     },
     ok:t => t.hash
       ? 'Image file is new — no byte-identical match in history.'
@@ -711,12 +727,12 @@ const RULES = [
     },
     msg:t => {
       const h = payerHistory(t.mobile);
-      return `Mobile ${t.mobile} was previously used by "${h.payer}", not "${t.payer}". The same number paying under a different name is a common mule-account pattern.`;
+      return `Mobile ${t.mobile} was previously used by "${h.payer}" on ${fmtDate(h.ts)}, not "${t.payer}". The same number paying under a different name is a common mule-account pattern.`;
     },
     ok:t => {
       if(!t.mobile) return 'No mobile number given — payer identity check skipped.';
       const h = payerHistory(t.mobile);
-      return h ? `Mobile matches a known payer ("${h.payer}") from ${h.date}.`
+      return h ? `Mobile matches a known payer ("${h.payer}") from ${fmtDate(h.ts)}.`
                : 'First payment from this mobile number — nothing to contradict.';
     } },
 
@@ -736,14 +752,14 @@ const RULES = [
     detects:'Same payer claiming the same amount twice',
     /* Catches a second claim for one payment made with a fresh reference,
        which R1 cannot see. */
-    test:t => LEDGER.some(x => x.amount === t.amount && x.utr !== t.utr &&
+    test:t => recentLedger().some(x => x.amount === t.amount && x.utr !== t.utr &&
               ((t.mobile && x.mobile === t.mobile) ||
                (!t.mobile && x.payer && t.payer && x.payer.toLowerCase() === t.payer.toLowerCase()))),
     msg:t => {
-      const p = LEDGER.find(x => x.amount === t.amount && x.utr !== t.utr &&
+      const p = recentLedger().find(x => x.amount === t.amount && x.utr !== t.utr &&
                 ((t.mobile && x.mobile === t.mobile) ||
                  (!t.mobile && x.payer.toLowerCase() === t.payer.toLowerCase())));
-      return `The same payer already claimed ₹${fmt(t.amount)} on ${p.date} under reference ${p.utr}. This is a second claim for the same amount.`;
+      return `The same payer already claimed ₹${fmt(t.amount)} on ${fmtDate(p.ts)} under reference ${p.utr}. This is a second claim for the same amount.`;
     },
     ok:'No earlier claim from this payer for the same amount.' },
 
@@ -766,26 +782,26 @@ const RULES = [
 
 /* ---------- Seed ledger (demo history) ---------- */
 const LEDGER = [
-  {date:'18 Aug', utr:'412508931477', payer:'Ramesh Patil',  mobile:'9822014577', vpa:MERCHANT_VPA, amount:2500, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
-  {date:'18 Aug', utr:'389041226630', payer:'Sunita Jadhav', mobile:'9730558812', vpa:MERCHANT_VPA, amount:1800, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
-  {date:'19 Aug', utr:'774125009863', payer:'Amit Kore',     mobile:'9146770231', vpa:'amit.pay@ybl',amount:5000,score:85, verdict:'RED',    reason:'Payee VPA mismatch', hash:null},
-  {date:'19 Aug', utr:'556203118742', payer:'Vikas More',    mobile:'9028441963', vpa:MERCHANT_VPA, amount:3200, score:30, verdict:'YELLOW', reason:'No settlement match', hash:null},
-  {date:'19 Aug', utr:'901337442158', payer:'Priya Shinde',  mobile:'8956120744', vpa:MERCHANT_VPA, amount:950,  score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
-  {date:'20 Aug', utr:'223908115570', payer:'Amit Kore',     mobile:'9146770231', vpa:MERCHANT_VPA, amount:7500, score:95, verdict:'RED',    reason:'Amount tampering', hash:null},
-  {date:'20 Aug', utr:'640182297431', payer:'Nilesh Gaikwad',mobile:'7887332905', vpa:MERCHANT_VPA, amount:4100, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
-  {date:'20 Aug', utr:'118450063392', payer:'Sunita Jadhav', mobile:'9730558812', vpa:MERCHANT_VPA, amount:2200, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null}
+  {ts:daysAgo(3), utr:'412508931477', payer:'Ramesh Patil',  mobile:'9822014577', vpa:MERCHANT_VPA, amount:2500, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {ts:daysAgo(3), utr:'389041226630', payer:'Sunita Jadhav', mobile:'9730558812', vpa:MERCHANT_VPA, amount:1800, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {ts:daysAgo(2), utr:'774125009863', payer:'Amit Kore',     mobile:'9146770231', vpa:'amit.pay@ybl',amount:5000,score:85, verdict:'RED',    reason:'Payee VPA mismatch', hash:null},
+  {ts:daysAgo(2), utr:'556203118742', payer:'Vikas More',    mobile:'9028441963', vpa:MERCHANT_VPA, amount:3200, score:30, verdict:'YELLOW', reason:'No settlement match', hash:null},
+  {ts:daysAgo(2), utr:'901337442158', payer:'Priya Shinde',  mobile:'8956120744', vpa:MERCHANT_VPA, amount:950,  score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {ts:daysAgo(1), utr:'223908115570', payer:'Amit Kore',     mobile:'9146770231', vpa:MERCHANT_VPA, amount:7500, score:95, verdict:'RED',    reason:'Amount tampering', hash:null},
+  {ts:daysAgo(1), utr:'640182297431', payer:'Nilesh Gaikwad',mobile:'7887332905', vpa:MERCHANT_VPA, amount:4100, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null},
+  {ts:daysAgo(1), utr:'118450063392', payer:'Sunita Jadhav', mobile:'9730558812', vpa:MERCHANT_VPA, amount:2200, score:0,  verdict:'GREEN',  reason:'All checks passed', hash:null}
 ];
 
 /* Most recent ledger entry for a payer mobile number, if any. */
 function payerHistory(mobile){
   if(!/^[6-9]\d{9}$/.test(mobile || '')) return null;
-  return LEDGER.find(x => x.mobile === mobile) || null;
+  return recentLedger().find(x => x.mobile === mobile) || null;
 }
 /* How many claims this payer has filed — by mobile when we have one. */
 function payerClaims(t){
   return t.mobile
-    ? LEDGER.filter(x => x.mobile === t.mobile).length
-    : LEDGER.filter(x => x.payer === t.payer).length;
+    ? recentLedger().filter(x => x.mobile === t.mobile).length
+    : recentLedger().filter(x => x.payer === t.payer).length;
 }
 
 /* ---------- Demo cases ---------- */
@@ -1275,7 +1291,7 @@ function onMobileEntered(){
     $('i-payer').value = h.payer; markAuto('i-payer'); filled = true;
   }
   note.innerHTML = `<b>Known payer — ${esc(h.payer)}</b>`
-    + `Last seen ${esc(h.date)}, ₹${fmt(h.amount)}, verdict ${esc(h.verdict)}.`
+    + `Last seen ${esc(fmtDate(h.ts))}, ₹${fmt(h.amount)}, verdict ${esc(h.verdict)}.`
     + (filled ? ' Payer name filled in from history.'
               : fromScreenshot ? ' Enter the name shown on your screenshot so it can be checked against this.'
                                : '');
@@ -1339,7 +1355,7 @@ $('run').onclick = () => {
   /* record it so the NEXT submission of the same proof is caught */
   const primary = r.checks.filter(c => c.failed).sort((a,b) => b.weight - a.weight)[0];
   LEDGER.unshift({
-    date:'20 Aug', utr:t.utr, payer:t.payer, mobile:t.mobile, vpa:t.vpa, amount:t.amount, status:t.status,
+    ts:Date.now(), utr:t.utr, payer:t.payer, mobile:t.mobile, vpa:t.vpa, amount:t.amount, status:t.status,
     score:r.score, verdict:r.verdict,
     reason: primary ? primary.name : 'All checks passed',
     hash: t.hash
@@ -1428,7 +1444,7 @@ document.querySelectorAll('#filters .fbtn').forEach(b => {
 function renderLedger(){
   const rows = LEDGER.filter(x => filter === 'ALL' || x.verdict === filter);
   $('ledger-rows').innerHTML = rows.length ? rows.map(x => `
-    <tr data-v="${x.verdict}"><td>${esc(x.date)}</td><td class="mono">${esc(x.utr)}</td><td>${esc(x.payer)}</td>
+    <tr data-v="${x.verdict}"><td>${esc(fmtDate(x.ts))}</td><td class="mono">${esc(x.utr)}</td><td>${esc(x.payer)}</td>
     <td style="font-size:11.5px">${esc(x.vpa)}</td><td>₹${fmt(x.amount)}</td>
     <td><b style="color:var(--tx)">${x.score}</b></td>
     <td><span class="pill ${x.verdict}">${x.verdict}</span></td>
