@@ -50,10 +50,13 @@
   }
   .logo-txt b{display:block;font-size:15px;letter-spacing:.2px}
   .logo-txt span{font-size:10px;color:var(--tx3);letter-spacing:.6px;text-transform:uppercase}
+  /* Real <button> elements so the nav is keyboard-reachable and announced
+     correctly; these rules undo the UA button styling. */
   .nav-item{
     display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;
     color:var(--tx2);cursor:pointer;font-size:13.5px;font-weight:500;border:1px solid transparent;
-    transition:.15s
+    transition:.15s;
+    width:100%;text-align:left;background:transparent;font-family:inherit;appearance:none
   }
   .nav-item:hover{background:var(--card);color:var(--tx)}
   .nav-item.active{background:var(--card2);color:var(--tx);border-color:var(--line2)}
@@ -72,7 +75,22 @@
   .g4{grid-template-columns:repeat(4,1fr)}
   .g2{grid-template-columns:1.15fr .85fr}
   @media(max-width:980px){.g4{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
-  @media(max-width:760px){.sidebar{display:none}.main{padding:18px}}
+  /* Below 760px the sidebar becomes a horizontal, scrollable tab strip.
+     It stays in the DOM and keeps the same click handler, so every view
+     remains reachable on a phone. */
+  @media(max-width:760px){
+    .app{flex-direction:column}
+    .sidebar{
+      flex-direction:row;width:100%;height:auto;position:sticky;top:0;z-index:20;
+      overflow-x:auto;overflow-y:hidden;gap:6px;padding:10px 12px;
+      border-right:none;border-bottom:1px solid var(--line);
+      -webkit-overflow-scrolling:touch;scrollbar-width:none
+    }
+    .sidebar::-webkit-scrollbar{display:none}
+    .logo,.sidebar-foot{display:none}
+    .nav-item{white-space:nowrap;flex-shrink:0;padding:10px 14px;min-height:44px}
+    .main{padding:18px 16px 48px}
+  }
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
   .card-t{font-size:12px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px}
@@ -108,7 +126,13 @@
     padding:9px 11px;color:var(--tx);font-size:13px;font-family:inherit
   }
   .field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
+  .field input.invalid,.field select.invalid{border-color:var(--red)}
+  .field .hint{display:block;font-size:10.5px;color:var(--tx3);margin-top:4px}
   .f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .form-error{
+    background:var(--redbg);border:1px solid var(--red);color:var(--red);
+    border-radius:9px;padding:10px 12px;font-size:12px;margin-bottom:11px;line-height:1.6
+  }
 
   .btn{
     width:100%;padding:12px;border:none;border-radius:9px;font-size:14px;font-weight:620;
@@ -141,6 +165,7 @@
   .verdict .vt{font-size:19px;font-weight:700;margin:8px 0 4px;letter-spacing:-.2px}
   .verdict.GREEN .vt{color:var(--green)} .verdict.YELLOW .vt{color:var(--amber)} .verdict.RED .vt{color:var(--red)}
   .verdict .vd{font-size:12.5px;color:var(--tx2);max-width:420px;margin:0 auto;line-height:1.6}
+  .verdict .v-action{margin-top:9px;font-weight:600;color:var(--tx)}
 
   .gauge{margin:14px auto 0;max-width:340px}
   .gauge-bar{height:9px;border-radius:9px;background:var(--bg);overflow:hidden;position:relative}
@@ -213,6 +238,22 @@
   .hidden{display:none!important}
   .preview{width:100%;border-radius:10px;border:1px solid var(--line2);margin-bottom:12px;max-height:230px;object-fit:contain;background:var(--bg)}
   .empty{text-align:center;padding:44px 20px;color:var(--tx3);font-size:13px}
+
+  /* ---------- Phone overrides ----------
+     These must sit LAST in the stylesheet: the base .f-row / .samples /
+     .field rules are defined after the layout media query above, and with
+     equal specificity the later rule wins. Keeping these at the end is
+     what makes them apply. */
+  @media(max-width:760px){
+    .f-row{grid-template-columns:1fr}
+    .samples{grid-template-columns:1fr}
+    /* Comfortable touch targets on a phone — 16px also stops iOS
+       from zooming the viewport when a field receives focus. */
+    .field input,.field select{padding:12px 12px;font-size:16px;min-height:46px}
+    .btn{padding:14px;min-height:48px}
+    .fbtn{padding:10px 14px;min-height:44px}
+    .toggle-row{padding:12px}
+  }
 </style>
 </head>
 <body>
@@ -224,11 +265,11 @@
       <div class="logo-mark">🛡️</div>
       <div class="logo-txt"><b>FraudShield</b><span>UPI AI Engine</span></div>
     </div>
-    <div class="nav-item active" data-view="dash"><span class="ic">▣</span> Dashboard</div>
-    <div class="nav-item" data-view="verify"><span class="ic">⚡</span> Verify Payment</div>
-    <div class="nav-item" data-view="ledger"><span class="ic">☰</span> Transaction Ledger</div>
-    <div class="nav-item" data-view="analytics"><span class="ic">◫</span> Fraud Analytics</div>
-    <div class="nav-item" data-view="about"><span class="ic">◈</span> How It Works</div>
+    <button class="nav-item active" data-view="dash" aria-current="page"><span class="ic" aria-hidden="true">▣</span> Dashboard</button>
+    <button class="nav-item" data-view="verify"><span class="ic" aria-hidden="true">⚡</span> Verify Payment</button>
+    <button class="nav-item" data-view="ledger"><span class="ic" aria-hidden="true">☰</span> Transaction Ledger</button>
+    <button class="nav-item" data-view="analytics"><span class="ic" aria-hidden="true">◫</span> Fraud Analytics</button>
+    <button class="nav-item" data-view="about"><span class="ic" aria-hidden="true">◈</span> How It Works</button>
     <div class="sidebar-foot">
       <b style="color:var(--tx2)">Merchant:</b> Sukhada Collections<br>
       <b style="color:var(--tx2)">VPA:</b> sukhada.collect@okaxis<br>
@@ -316,14 +357,14 @@
 
           <div class="card-t" style="margin:22px 0 12px">Step 2 — Extracted Fields <span style="text-transform:none;letter-spacing:0;color:var(--tx3);font-weight:400">(OCR output — editable)</span></div>
           <div class="f-row">
-            <div class="field"><label>Amount claimed (₹)</label><input id="i-amt" type="number" value="2500"></div>
-            <div class="field"><label>Amount expected (₹)</label><input id="i-exp" type="number" value="2500"></div>
+            <div class="field"><label for="i-amt">Amount claimed (₹)</label><input id="i-amt" type="number" value="2500" inputmode="decimal"></div>
+            <div class="field"><label for="i-exp">Amount expected (₹)</label><input id="i-exp" type="number" value="2500" inputmode="decimal"><small class="hint">What this customer actually owes you</small></div>
           </div>
-          <div class="field"><label>UTR / Reference number</label><input id="i-utr" value="412508931477"></div>
-          <div class="field"><label>Payee VPA on screenshot</label><input id="i-vpa" value="sukhada.collect@okaxis"></div>
+          <div class="field"><label for="i-utr">UTR / Reference number</label><input id="i-utr" value="412508931477" inputmode="numeric"></div>
+          <div class="field"><label for="i-vpa">Payee VPA on screenshot</label><input id="i-vpa" value="sukhada.collect@okaxis"></div>
           <div class="f-row">
-            <div class="field"><label>Payer name</label><input id="i-payer" value="Ramesh Patil"></div>
-            <div class="field"><label>Screenshot age</label>
+            <div class="field"><label for="i-payer">Payer name</label><input id="i-payer" value="Ramesh Patil"></div>
+            <div class="field"><label for="i-age">Screenshot age</label>
               <select id="i-age">
                 <option value="0.2">Just now (12 min)</option>
                 <option value="20">Today (20 hrs)</option>
@@ -334,8 +375,9 @@
           </div>
           <div class="toggle-row">
             <div class="tl"><b>Payment gateway connected</b><span>Cross-check UTR against real bank settlement</span></div>
-            <label class="sw"><input type="checkbox" id="i-gw" checked><span class="sl"></span></label>
+            <label class="sw"><input type="checkbox" id="i-gw" checked aria-label="Payment gateway connected"><span class="sl"></span></label>
           </div>
+          <div id="form-error" class="form-error hidden" role="alert"></div>
           <button class="btn" id="run">⚡ Run Fraud Analysis</button>
         </div>
 
@@ -345,11 +387,12 @@
           <div id="result-empty" class="empty">
             ⬅ Load a demo case or upload a screenshot,<br>then click <b>Run Fraud Analysis</b>.
           </div>
-          <div id="result" class="hidden">
+          <div id="result" class="hidden" role="status" aria-live="polite">
             <div class="verdict" id="verdict">
-              <div class="em" id="v-em">✓</div>
+              <div class="em" id="v-em" aria-hidden="true">✓</div>
               <div class="vt" id="v-title"></div>
               <div class="vd" id="v-desc"></div>
+              <div class="vd v-action" id="v-action"></div>
               <div class="gauge">
                 <div class="gauge-bar"><div class="gauge-fill" id="v-fill" style="width:0%"></div></div>
                 <div class="gauge-lbl"><span>Risk score</span><span><b id="v-score">0</b> / 100</span></div>
@@ -664,8 +707,13 @@ function fileHash(buffer){
    ================================================================ */
 function analyse(t){
   const checks = RULES.map(r => {
-    let failed = false;
-    try { failed = r.test(t); } catch(e){ failed = false; }
+    /* Fail closed: a rule that throws is treated as unresolved, not as a
+       pass. Silently passing a broken check is the wrong default for a
+       fraud system. */
+    let failed = false, broke = false;
+    try { failed = r.test(t); } catch(e){ broke = true; }
+    if(broke) return {id:r.id, name:r.name, weight:r.weight, failed:true,
+                      detail:'Check could not be completed — treated as unresolved.'};
     const ok = typeof r.ok === 'function' ? r.ok(t) : r.ok;
     return {
       id: r.id, name: r.name, weight: r.weight, failed,
@@ -678,10 +726,19 @@ function analyse(t){
   return {score, verdict, checks};
 }
 
+/* Wording states only what the rules actually established. The engine
+   checks predefined signals — it is not a bank or government verification
+   service — so no verdict claims a payment is "genuine". */
 const VERDICT_TEXT = {
-  GREEN : {em:'✓', t:'Payment Verified',      d:'All checks passed. This payment is genuine and confirmed received — safe to mark as paid.'},
-  YELLOW: {em:'⚠', t:'Needs Manual Review',   d:'Could not fully verify this payment. Nothing proves it is fake, but confirm with your bank statement before releasing goods.'},
-  RED   : {em:'✕', t:'High Risk — Do Not Accept', d:'This payment proof failed critical checks. Do not mark as paid. Verify directly with your bank before proceeding.'}
+  GREEN : {em:'✓', t:'Verified — Low Risk',
+    d:'All checks passed and no suspicious indicators were found. This is a rules-based screening, not a bank confirmation — it does not guarantee the payment is irreversible.',
+    a:'Recommended action: safe to proceed with normal caution.'},
+  YELLOW: {em:'⚠', t:'Unable to Verify — Manual Check Needed',
+    d:'Some checks could not be completed. Nothing here proves the payment is fake, but nothing confirms it either.',
+    a:'Recommended action: confirm against your bank statement before releasing goods.'},
+  RED   : {em:'✕', t:'High Risk — Do Not Accept',
+    d:'This payment proof failed one or more critical checks. Treat the claim as unverified.',
+    a:'Recommended action: do not mark as paid. Verify directly with your bank first.'}
 };
 
 /* ================================================================
@@ -689,6 +746,12 @@ const VERDICT_TEXT = {
    ================================================================ */
 const $  = id => document.getElementById(id);
 const fmt = n => Number(n).toLocaleString('en-IN');
+
+/* Escape every user-controlled value before it reaches innerHTML.
+   Payer names, VPAs and UTRs are free text typed by the operator, and
+   rule messages embed them — without this they would be parsed as markup. */
+const esc = s => String(s ?? '').replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let uploadedHash = null;
 
 /* ---- navigation ---- */
@@ -715,6 +778,7 @@ document.querySelectorAll('.sample-btn').forEach(b => {
     $('i-payer').value = v.payer; $('i-age').value = v.age;
     $('i-gw').checked = v.gw;
     uploadedHash = null;
+    clearFormError();
     $('prev').classList.add('hidden');
     $('drop').classList.remove('hidden');
   };
@@ -731,29 +795,75 @@ drop.ondrop = e => {
 };
 file.onchange = e => { if(e.target.files[0]) loadImage(e.target.files[0]); };
 
-function loadImage(f){
-  /* Two reads: raw bytes for the exact-file hash, data URL for preview. */
-  const bin = new FileReader();
-  bin.onload = ev => { uploadedHash = fileHash(ev.target.result); };
-  bin.readAsArrayBuffer(f);
+const MAX_UPLOAD = 15 * 1024 * 1024;   // 15 MB — well above any phone screenshot
 
+function loadImage(f){
+  /* Drag-and-drop bypasses the input's accept filter, so validate here. */
+  if(!f.type.startsWith('image/')){
+    showFormError(`"${f.name}" is not an image. Upload a JPG or PNG screenshot.`);
+    return;
+  }
+  if(f.size > MAX_UPLOAD){
+    showFormError(`That file is ${(f.size/1048576).toFixed(1)} MB. Please upload an image under 15 MB.`);
+    return;
+  }
+  clearFormError();
+
+  /* One read: the raw bytes give both the exact-file hash and the preview,
+     so the hash is always ready before the preview appears — no race
+     between two independent readers. */
   const rd = new FileReader();
+  rd.onerror = () => showFormError('Could not read that file. Please try another image.');
   rd.onload = ev => {
-    $('prev').src = ev.target.result;
+    const buf = ev.target.result;
+    uploadedHash = fileHash(buf);
+    const blob = new Blob([buf], {type:f.type});
+    $('prev').src = URL.createObjectURL(blob);
     $('prev').classList.remove('hidden');
     drop.classList.add('hidden');
   };
-  rd.readAsDataURL(f);
+  rd.readAsArrayBuffer(f);
+}
+
+/* ---- validation ---- */
+function showFormError(msg){
+  const el = $('form-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+function clearFormError(){
+  $('form-error').classList.add('hidden');
+  document.querySelectorAll('.field .invalid').forEach(e => e.classList.remove('invalid'));
+}
+
+/* Returns an error string, or null when the form is usable. */
+function validateForm(){
+  clearFormError();
+  const problems = [];
+  const mark = id => { $(id).classList.add('invalid'); };
+
+  if($('i-utr').value.trim() === ''){ problems.push('a UTR / reference number'); mark('i-utr'); }
+  if($('i-vpa').value.trim() === ''){ problems.push('the payee VPA'); mark('i-vpa'); }
+  if($('i-amt').value.trim() === '' || isNaN(+$('i-amt').value)){ problems.push('the amount claimed'); mark('i-amt'); }
+  if($('i-exp').value.trim() === '' || isNaN(+$('i-exp').value)){ problems.push('the amount expected'); mark('i-exp'); }
+
+  if(problems.length) return 'Please enter ' + problems.join(', ') + ' before running the analysis.';
+  if(+$('i-amt').value < 0 || +$('i-exp').value < 0) { mark('i-amt'); mark('i-exp');
+    return 'Amounts cannot be negative.'; }
+  return null;
 }
 
 /* ---- run analysis ---- */
 $('run').onclick = () => {
+  const err = validateForm();
+  if(err){ showFormError(err); return; }
+
   const t = {
     amount:   +$('i-amt').value,
     expected: +$('i-exp').value,
-    utr:      $('i-utr').value,
-    vpa:      $('i-vpa').value,
-    payer:    $('i-payer').value || 'Unknown',
+    utr:      $('i-utr').value.trim(),
+    vpa:      $('i-vpa').value.trim(),
+    payer:    $('i-payer').value.trim() || 'Unknown',
     ageHours: +$('i-age').value,
     gateway:  $('i-gw').checked,
     hash:     uploadedHash
@@ -779,6 +889,7 @@ function showResult(t, r){
   $('v-em').textContent = vt.em;
   $('v-title').textContent = vt.t;
   $('v-desc').textContent = vt.d;
+  $('v-action').textContent = vt.a;
   $('v-score').textContent = r.score;
   const col = r.verdict === 'RED' ? 'var(--red)' : r.verdict === 'YELLOW' ? 'var(--amber)' : 'var(--green)';
   const fill = $('v-fill');
@@ -788,7 +899,7 @@ function showResult(t, r){
   $('checks').innerHTML = r.checks.map(c => `
     <div class="check">
       <div class="chk-ic ${c.failed ? 'fail' : 'pass'}">${c.failed ? '✕' : '✓'}</div>
-      <div class="chk-body"><b>${c.name}</b><span>${c.detail}</span></div>
+      <div class="chk-body"><b>${esc(c.name)}</b><span>${esc(c.detail)}</span></div>
       <div class="chk-w">${c.failed ? '+' + c.weight : '—'}</div>
     </div>`).join('');
 }
@@ -797,8 +908,10 @@ $('again').onclick = () => {
   $('result').classList.add('hidden');
   $('result-empty').classList.remove('hidden');
   uploadedHash = null;
+  clearFormError();
   $('prev').classList.add('hidden');
   drop.classList.remove('hidden');
+  $('i-utr').focus();
 };
 
 /* ---- dashboard ---- */
@@ -817,7 +930,7 @@ function renderDash(){
   $('d-g').textContent = grn; $('d-y').textContent = yel; $('d-r').textContent = red;
 
   $('dash-rows').innerHTML = LEDGER.slice(0, 6).map(x => `
-    <tr data-v="${x.verdict}"><td class="mono">${x.utr}</td><td>${x.payer}</td>
+    <tr data-v="${x.verdict}"><td class="mono">${esc(x.utr)}</td><td>${esc(x.payer)}</td>
     <td>₹${fmt(x.amount)}</td><td><b style="color:var(--tx)">${x.score}</b></td>
     <td><span class="pill ${x.verdict}">${x.verdict}</span></td></tr>`).join('');
 
@@ -846,11 +959,11 @@ document.querySelectorAll('#filters .fbtn').forEach(b => {
 function renderLedger(){
   const rows = LEDGER.filter(x => filter === 'ALL' || x.verdict === filter);
   $('ledger-rows').innerHTML = rows.length ? rows.map(x => `
-    <tr data-v="${x.verdict}"><td>${x.date}</td><td class="mono">${x.utr}</td><td>${x.payer}</td>
-    <td style="font-size:11.5px">${x.vpa}</td><td>₹${fmt(x.amount)}</td>
+    <tr data-v="${x.verdict}"><td>${esc(x.date)}</td><td class="mono">${esc(x.utr)}</td><td>${esc(x.payer)}</td>
+    <td style="font-size:11.5px">${esc(x.vpa)}</td><td>₹${fmt(x.amount)}</td>
     <td><b style="color:var(--tx)">${x.score}</b></td>
     <td><span class="pill ${x.verdict}">${x.verdict}</span></td>
-    <td style="font-size:11.5px">${x.reason}</td></tr>`).join('')
+    <td style="font-size:11.5px">${esc(x.reason)}</td></tr>`).join('')
     : `<tr><td colspan="8" class="empty">No transactions in this category.</td></tr>`;
 }
 
@@ -870,7 +983,7 @@ function renderAnalytics(){
   const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]);
   const mx = Math.max(...entries.map(e => e[1]), 1);
   $('rule-stats').innerHTML = entries.length ? entries.map(([n,c]) => `
-    <div class="rule-row"><div class="rn">${n}</div>
+    <div class="rule-row"><div class="rn">${esc(n)}</div>
       <div class="rb"><i style="width:${c/mx*100}%"></i></div>
       <div class="rc">${c}</div></div>`).join('')
     : `<div class="empty">No flagged transactions yet.</div>`;
@@ -882,7 +995,7 @@ function renderAnalytics(){
   });
   const tp = Object.entries(byPayer).sort((a,b) => b[1].n - a[1].n);
   $('top-fraud').innerHTML = tp.length ? tp.map(([p,v]) => `
-    <tr><td style="color:var(--tx)">${p}</td><td>${v.n}</td><td>₹${fmt(v.amt)}</td>
+    <tr><td style="color:var(--tx)">${esc(p)}</td><td>${v.n}</td><td>₹${fmt(v.amt)}</td>
     <td><span class="pill RED">${v.n >= 2 ? 'Blocklisted' : 'Watchlist'}</span></td></tr>`).join('')
     : `<tr><td colspan="4" class="empty">No repeat offenders detected.</td></tr>`;
 }
