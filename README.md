@@ -37,7 +37,7 @@ handling forty payments a day.
 
 | Module | Answers |
 |---|---|
-| **Message Scanner** | Is this WhatsApp or SMS a scam? 15 heuristics for Indian fraud — UPI-PIN-to-receive, APK links, remote-access apps, KYC and reward bait, task-job scams, spoofed sender IDs |
+| **Message Scanner** | Is this WhatsApp or SMS a scam? 15 heuristics for Indian fraud in **English, Marathi and Hindi** — UPI-PIN-to-receive, APK links, remote-access apps, KYC and reward bait, task-job scams, spoofed sender IDs. Devanagari and Roman-script Marathi both covered |
 | **UPI ID & QR Check** | Is this UPI ID safe to pay? Validates the handle against the NPCI list, flags impersonation wording, and parses `upi://` QR text for pre-filled amounts |
 | **Verify Payment** | Is this payment screenshot genuine? 12 weighted rules over OCR-read fields |
 

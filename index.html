@@ -1757,7 +1757,10 @@ const SCAM_RULES = [
     act:'Check any reward balance inside the official app. Ignore the message.' },
 
   { id:'JOB_SCAM', sev:'mid', weight:30, label:'Part-time job or task scam',
-    re:/\b(?:part[\s-]?time\s*job|work\s*from\s*home|daily\s*(?:income|earning|payout)|per\s*task|prepaid\s*task|task\s*complete|join\s*(?:our\s*)?telegram|telegram\s*(?:group|channel)|earn\s*(?:rs\.?|₹)\s*\d)/gi,
+    /* Asking for work is not fraud; being offered improbable earnings is.
+       So the phrase alone never fires — it needs a promised sum or the
+       task/Telegram framing beside it. */
+    re:/\b(?:daily\s*(?:income|earning|payout)|per\s*task|prepaid\s*task|task\s*complete|join\s*(?:our\s*)?telegram|telegram\s*(?:group|channel))\b|\b(?:part[\s-]?time|work\s*from\s*home)\b[^.]{0,52}(?:earn|income|daily|rs\.?\s*\d|₹|\d{3,})|(?:earn|income)[^.]{0,24}(?:rs\.?\s*\d|₹\s*\d|\d{4,})/gi,
     why:'Task scams pay small amounts first, then ask for a deposit to unlock a bigger one. The deposit is the scam.',
     act:'Leave the group. Never pay to be paid.' },
 
@@ -1788,6 +1791,63 @@ const SCAM_RULES = [
     act:'Treat loud formatting as one more reason to slow down.' }
 ];
 
+/* ================================================================
+   Marathi and Hindi patterns
+
+   Layered onto the existing rules rather than duplicated as new ones,
+   so a bilingual message produces one finding with one explanation
+   instead of two. Keyed by rule id; scanMessage tests both.
+
+   No \b anywhere here. In JavaScript \w is ASCII-only, so Devanagari
+   characters are non-word characters and a word boundary before one
+   behaves backwards. These match on the words themselves.
+
+   Roman-script lines matter as much as the Devanagari: most people
+   type Marathi in English letters on a phone.
+   ================================================================ */
+const MR_PATTERNS = {
+  PIN_TO_RECEIVE:
+    /(?:यूपीआय|युपीआय|यूपीआई)?\s*पिन\s*(?:टाका|भरा|सांगा|शेअर|द्या|टाकून)|पिन\s*(?:क्रमांक|नंबर)\s*(?:सांगा|द्या)|(?:upi\s*)?pin\s*(?:taka|bhara|sanga|dya|share\s*kara)/gi,
+
+  COLLECT_REQUEST:
+    /(?:रिक्वेस्ट|विनंती|रिक्वेस्ट्)\s*(?:स्वीकारा|अ‍ॅक्सेप्ट|मंजूर|अ‍ॅप्रूव्ह)|(?:request|vinanti)\s*(?:swikara|accept\s*kara|manjur)/gi,
+
+  APK:
+    /(?:अ‍ॅप|अॅप|ॲप|एप)\s*(?:डाउनलोड|डाऊनलोड|इन्स्टॉल)\s*(?:करा|कर)|(?:app|apk)\s*(?:download|install)\s*kara/gi,
+
+  REMOTE_APP:
+    /(?:एनीडेस्क|एनी\s*डेस्क|टीमव्ह्यूअर|क्विक\s*सपोर्ट)|(?:anydesk|teamviewer|quicksupport)\s*(?:download|install)?\s*kara/gi,
+
+  URGENCY:
+    /(?:तात्काळ|ताबडतोब|तुरंत|तात्काल|लगेच|आजच|आज\s*रात्री|आजरात्री|लवकर|शेवटची\s*संधी|अंतिम\s*संधी|मुदत\s*संपत|२४\s*तास|24\s*तासा|अभी\s*तुरंत)|(?:taatkal|tabadtob|lagech|aajach|aaj\s*ratri|shevatchi\s*sandhi|lavkar)/gi,
+
+  THREAT:
+    /(?:खाते|खातं|अकाउंट|कार्ड|सिम|वीज|कनेक्शन|सेवा|नंबर)[^।.]{0,26}(?:बंद|ब्लॉक|खंडित|रद्द|निलंबित)|(?:गुन्हा\s*दाखल|एफआयआर|कायदेशीर\s*कारवाई|कारवाई\s*केली|अटक|दंड\s*(?:आकारला|भरावा))|(?:khate|khata|account)\s*(?:band|block)\s*(?:hoil|honar|kele)|(?:gunha\s*dakhal|karvai|atak)/gi,
+
+  KYC_BAIT:
+    /(?:केवायसी|के\s*वाय\s*सी|केवायसी)\s*(?:अपडेट|पूर्ण|करा)|(?:खाते|खातं|पॅन|आधार)\s*(?:अपडेट|अद्ययावत)\s*करा|(?:kyc|pan|aadhar)\s*update\s*kara/gi,
+
+  LOTTERY:
+    /(?:बक्षीस|बक्षिस|लॉटरी|लकी\s*ड्रॉ|जॅकपॉट|इनाम)\s*(?:जिंकल|लागल|मिळाल)|(?:तुम्ही|आपण)\s*(?:जिंकल|विजेते)|(?:bakshis|lottery|lucky\s*draw)\s*(?:jinkal|lagal|milal)/gi,
+
+  REWARD_BAIT:
+    /(?:रिवॉर्ड|पॉइंट्स|पॉईंट्स|कॅशबॅक|बोनस)[^।.]{0,40}(?:संपत|संपणार|आजच|लवकर|मुदत)|(?:cashback|points)[^।.]{0,40}(?:sampat|aajach|lavkar)/gi,
+
+  JOB_SCAM:
+    /(?:रोज|दररोज|दैनिक)\s*(?:कमाई|कमवा|उत्पन्न)|(?:घरबसल्या|घर\s*बसल्या|घरून|पार्ट\s*टाइम|अर्धवेळ)[^।.]{0,44}(?:कमाई|कमवा|रुपये|₹|[\u0966-\u096F\d]{3,})|(?:टास्क|कार्य)\s*पूर्ण\s*करा|(?:gharbaslya|ghar\s*basalya)[^.]{0,44}(?:kamai|kamva|rupaye|\d{3,})|(?:roj|dararoj)\s*(?:kamai|kamva)|part\s*time\s*(?:naukri|kaam)[^.]{0,44}(?:kamai|kamva|rupaye|\d{3,})/gi,
+  CALL_NUMBER:
+    /(?:कॉल|फोन|संपर्क|कॉन्टॅक्ट)\s*(?:करा|साधा|कर)[^।.]{0,26}(?:\+?91[\s-]?)?(?<!\d)[6-9]\d{4}[\s-]?\d{5}(?!\d)|(?:call|phone|sampark)\s*kara[^।.]{0,26}(?<!\d)[6-9]\d{4}[\s-]?\d{5}(?!\d)/gi,
+
+  UTILITY:
+    /(?:वीज|विज|वीजपुरवठा|लाइट|मीटर|बिल)[^।.]{0,40}(?:खंडित|बंद|कट|तोडल)|(?:vij|light|meter|bill)[^।.]{0,40}(?:khandit|band|kaapla)|महावितरण|महावितरण/gi,
+
+  PERSONAL_DATA:
+    /(?:ओटीपी|ओ\s*टी\s*पी|पासवर्ड|सीव्हीव्ही|कार्ड\s*नंबर|एमपिन)\s*(?:सांगा|द्या|शेअर|पाठवा|टाका)|(?:सांगा|द्या|शेअर|पाठवा|टाका)[^।.]{0,20}(?:ओटीपी|पासवर्ड|सीव्हीव्ही)|(?:otp|password|cvv)\s*(?:sanga|dya|share\s*kara|pathva)/gi,
+
+  SHORTENER:
+    /(?:लिंक|दुवा)[^।.]{0,20}(?:क्लिक|उघडा|ओपन)|(?:link)\s*var\s*click\s*kara/gi
+};
+
 /* Real bank SMS arrives from a 6-character alphanumeric sender ID behind a
    2-letter operator prefix — AD-SBIINB, VM-HDFCBK. A 10-digit mobile number
    claiming to be a bank is decisive on its own. */
@@ -1815,15 +1875,22 @@ const MSG_SAMPLES = [
   {t:'💼 Telegram task job', d:'Part-time job / task scam', sender:'',
    body:`Hello! Congratulations, you are selected for a part time job. Daily income Rs.3000-8000 from home. Just complete simple tasks. Join our telegram group t.me/dailyearn_task now and start earning today.`},
   {t:'💸 UPI refund request', d:'Collect request sold as a refund', sender:'',
-   body:`Sir your order was cancelled, refund of Rs.4,500 is initiated. To receive the refund please accept the payment request in your GPay and enter your UPI PIN to confirm the credit. Call 8899221100 if not received in 10 min.`}
+   body:`Sir your order was cancelled, refund of Rs.4,500 is initiated. To receive the refund please accept the payment request in your GPay and enter your UPI PIN to confirm the credit. Call 8899221100 if not received in 10 min.`},
+  {t:'⚡ वीज खंडित (मराठी)', d:'Marathi — Devanagari', sender:'9021447785',
+   body:`प्रिय ग्राहक, तुमचे मागील बिल अपडेट न झाल्याने तुमची वीज आज रात्री ९:३० वाजता खंडित केली जाईल. तात्काळ आमच्या अधिकाऱ्यांशी 9021447785 वर संपर्क साधा. - महावितरण`},
+  {t:'💰 पैसे मिळवा (मराठी)', d:'Marathi — PIN to receive', sender:'',
+   body:`तुमचा ४५०० रुपयांचा परतावा मंजूर झाला आहे. पैसे मिळवण्यासाठी आलेली रिक्वेस्ट स्वीकारा आणि तुमचा यूपीआय पिन टाका. केवायसी अपडेट करा नाहीतर खाते बंद होईल.`},
+  {t:'💼 Gharbaslya kamai', d:'Roman-script Marathi job scam', sender:'',
+   body:`Namaskar! Gharbaslya kamai kara. Roj 3000 te 8000 rupaye. Fakt simple task purn kara. Aamchya telegram group t.me/marathi_task var join kara ani aajach suru kara.`}
 ];
 
 function scanMessage(text, sender){
   const hits = [], ranges = [];
   for(const r of SCAM_RULES){
     if(r.guard && r.guard(text)) continue;   // legitimate context — do not fire
-    r.re.lastIndex = 0;
-    const found = [...text.matchAll(r.re)];
+    const pats = [r.re, MR_PATTERNS[r.id]].filter(Boolean);
+    const found = [];
+    for(const p of pats){ p.lastIndex = 0; found.push(...text.matchAll(p)); }
     if(!found.length) continue;
     hits.push({...r, count:found.length, sample:found[0][0]});
     found.forEach(m => ranges.push({start:m.index, end:m.index + m[0].length, sev:r.sev, label:r.label}));
