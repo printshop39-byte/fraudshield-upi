@@ -1741,9 +1741,19 @@ const SCAM_RULES = [
     why:'"Complete your KYC" is the most common banking-fraud opener in India.',
     act:'Banks do not collect KYC over a link or a call. Use the branch or the official app only.' },
 
-  { id:'REWARD_BAIT', sev:'mid', weight:25, label:'Reward, lottery or cashback bait',
-    re:/\b(?:reward\s*points?|redeem|cashback|lucky\s*draw|lottery|you\s*(?:have\s*)?won|prize|gift\s*(?:card|voucher)|bonus\s*(?:points?|amount))\b/gi,
-    why:'Expiring reward points and surprise winnings exist to get you onto a fake page in a hurry.',
+  { id:'LOTTERY', sev:'hi', weight:50, label:'Lottery or prize win claimed',
+    /* Separated from the softer reward-points bait: an unsolicited win is
+       never real, and pairing it with a phone number was landing these one
+       point short of Red. */
+    re:/\b(?:you\s*(?:have\s*)?won|lucky\s*draw|lottery|jackpot|k\s*b\s*c|prize\s*money|winner\s*of)\b/gi,
+    why:'An unsolicited win you never entered is a lure. The prize does not exist; the processing fee they ask for next is the scam.',
+    act:'Ignore it. Never pay a fee, tax or deposit to release a prize.' },
+
+  { id:'REWARD_BAIT', sev:'mid', weight:25, label:'Reward or cashback bait',
+    /* A bank telling you your points balance is not bait. The bait is the
+       deadline attached to it, so the urgency has to be present too. */
+    re:/\b(?:reward\s*points?|cashback|gift\s*(?:card|voucher)|bonus\s*(?:points?|amount))\b[^.]{0,44}\b(?:expir\w*|today|now|immediately|hurry|last\s*day|before\s*midnight)\b|\b(?:expir\w*|hurry|last\s*day)\b[^.]{0,44}\b(?:reward\s*points?|cashback|gift\s*(?:card|voucher))\b/gi,
+    why:'Expiring points and vanishing cashback exist to get you onto a fake page in a hurry.',
     act:'Check any reward balance inside the official app. Ignore the message.' },
 
   { id:'JOB_SCAM', sev:'mid', weight:30, label:'Part-time job or task scam',
@@ -1763,7 +1773,7 @@ const SCAM_RULES = [
     why:'The electricity-disconnection message is a mass-run scam across India.',
     act:'Check your bill in the official utility app or on your last paper bill. Do not use their number.' },
 
-  { id:'PERSONAL_DATA', sev:'hi', weight:45, label:'Asks for OTP, CVV, card or password',
+  { id:'PERSONAL_DATA', sev:'hi', weight:55, label:'Asks for OTP, CVV, card or password',
     /* Matches a request, not a mention. "123456 is your OTP, do not share it"
        is the bank doing its job; the guard keeps that out. */
     re:/\b(?:share|send|tell|give|provide|enter|type|forward|confirm|submit)\b[^.]{0,32}\b(?:o\.?t\.?p\.?|c\.?v\.?v\.?|card\s*number|debit\s*card|credit\s*card|expiry|password|net\s*banking(?:\s*(?:id|password))?|mpin)\b|\b(?:o\.?t\.?p\.?|c\.?v\.?v\.?|mpin|password)\b[^.]{0,24}\b(?:share|send|tell|give|provide)\b/gi,
