@@ -2,7 +2,7 @@
 
 A working prototype of a fraud-screening engine for **UPI payment screenshots** sent over
 WhatsApp. Built as a single self-contained HTML file — no build step, no server, no
-internet connection required.
+`package.json`. Your screenshot is read in the browser and is **never uploaded anywhere**.
 
 > ### ▶ [Live demo — printshop39-byte.github.io/fraudshield-upi](https://printshop39-byte.github.io/fraudshield-upi/)
 >
@@ -37,14 +37,19 @@ handling forty payments a day.
 Feed it a payment claim — a screenshot plus the extracted fields — and it returns an
 **explainable risk verdict** in under a second.
 
-- **Risk score 0–100** from a weighted rule engine
-- **Green / Yellow / Red** verdict with an explicit threshold
+- **Reads the screenshot** — amount, reference, payee UPI ID, payer name, mobile and status
+  are pulled out by OCR running entirely in your browser, then marked for you to check
+- **Risk score 0–100** from a twelve-rule weighted engine
+- **Green / Yellow / Red** verdict with an explicit threshold and a recommended action
 - **Per-rule breakdown** — every check states why it passed or failed
+- **Payment direction** — tells you when a screenshot is a payment you *sent*, or when your
+  UPI ID is entered with the wrong bank handle
 - **Transaction ledger** with severity striping and verdict filters
 - **Fraud analytics** — which rule is catching what, and repeat-offender tracking
 
-Four one-click demo cases are built in (genuine, replay, wrong VPA, edited amount), and
-you can upload a real screenshot or edit any extracted field to drive the engine yourself.
+Eight one-click demo cases are built in, and you can upload a real screenshot or edit any
+field to drive the engine yourself. **Set your own merchant UPI ID first** — every payee is
+compared against it.
 
 ### Verdict thresholds
 
@@ -58,19 +63,23 @@ you can upload a real screenshot or edit any extracted field to drive the engine
 
 ## The rule engine
 
-Eight weighted rules. A rule fires when its **fraud condition** is present, and its weight
+Twelve weighted rules. A rule fires when its **fraud condition** is present, and its weight
 is added to the risk score.
 
 | ID | Rule | Detects | Weight |
 |---|---|---|---|
+| R10 | Transaction status | Pending or failed payment shown as proof | 65 |
 | R1 | UTR reuse detection | Same reference number claimed twice | 60 |
 | R2 | Exact file duplicate | Identical image file forwarded again | 55 |
 | R3 | Payee VPA verification | Money sent to a different UPI ID | 55 |
 | R4 | Amount integrity check | Edited or mismatched amount | 45 |
+| R9 | Payer identity consistency | Mobile number reused under a different name | 40 |
+| R11 | Duplicate claim window | Same payer claiming the same amount twice | 35 |
 | R5 | UTR format validation | Fabricated reference number | 30 |
-| R6 | Timestamp freshness | Old transaction reused as new | 20 |
-| R7 | Payer velocity check | Unusual submission frequency | 15 |
 | R8 | Bank settlement match | No real money received | 30 |
+| R6 | Timestamp freshness | Old transaction reused as new | 20 |
+| R12 | Receipt completeness | Cropped or fabricated receipt | 20 |
+| R7 | Payer velocity check | Unusual submission frequency | 15 |
 
 Weights are calibrated so that **any single critical rule (R1–R3) pushes the score into
 Red on its own**, while softer signals only escalate in combination.
@@ -135,11 +144,11 @@ Customer sends UPI screenshot on WhatsApp
                              exact-match only, catches forwarded copies
              │
              ▼
-  2. FIELD EXTRACTION      → amount, UTR, payee VPA, timestamp
-                             (OCR — simulated in this prototype)
+  2. FIELD EXTRACTION      → amount, UTR, payee + payer VPA, mobile,
+                             payer name, status — Tesseract.js in-browser
              │
              ▼
-  3. RULE ENGINE           → 8 weighted rules → risk score 0–100
+  3. RULE ENGINE           → 12 weighted rules → risk score 0–100
              │
              ▼
   4. GATEWAY CROSS-CHECK   → match UTR against bank settlement
@@ -163,20 +172,26 @@ git clone https://github.com/printshop39-byte/fraudshield-upi.git
 
 Then open `index.html` in any modern browser. That's the whole setup.
 
-No npm, no Python, no server. The page works fully offline — webfonts are loaded from
-Google Fonts when a connection is available and fall back cleanly to system faces when
-it isn't.
+No npm, no Python, no server. The page itself works offline — webfonts fall back to system
+faces without a connection. **OCR needs the internet the first time**, to fetch Tesseract.js
+from a CDN; without it the form drops to manual entry and says so, and every rule except the
+OCR-dependent ones still applies.
 
 ### Demo walkthrough
 
 1. **Dashboard** — screened volume, fraud blocked, amount protected, coverage rate
-2. **Verify → "Genuine payment"** — score 0, Green
-3. **Verify → "Screenshot replay"** — score 90, Red (UTR already used)
-4. **Verify → "Wrong UPI ID"** — score 85, Red (money went to another VPA)
-5. **Verify → "Edited amount"** — score 95, Red (₹12,500 claimed vs ₹1,250 due, 3 days old)
-6. Turn **"Payment gateway connected"** off and re-run the genuine case — Green becomes
+2. **Verify → "Genuine payment"** — score 0, Verified — Low Risk
+3. **"Screenshot replay"** — 90, Red (UTR already used)
+4. **"Wrong UPI ID"** — 85, Red (money went to another VPA)
+5. **"Edited amount"** — 95, Red (₹12,500 claimed vs ₹1,250 due, 3 days old)
+6. **"Payer identity mismatch"** — 70, Red (known mobile number, new name)
+7. **"Pending payment"** — 95, Red (never settled, shown as paid)
+8. **"Double claim"** — 80, Red (same payer, same amount, fresh reference)
+9. Turn **"Payment gateway connected"** off and re-run the genuine case — Green becomes
    Yellow, demonstrating Flow A vs Flow B
-7. Upload any image **twice** — the second submission is caught as an exact-file duplicate
+10. Upload any image **twice** — the second is caught as an exact-file duplicate
+11. Upload a real screenshot and open **"What the screenshot reader saw"** to see the OCR
+    output the fields were filled from
 
 ---
 
@@ -184,9 +199,14 @@ it isn't.
 
 This is a **prototype**, and the following are deliberately out of scope:
 
-- **OCR is simulated.** Extracted fields are presented as editable inputs rather than read
-  from the image. Production OCR on WhatsApp-compressed images is a real accuracy problem
-  and would need its own evaluation.
+- **OCR accuracy is not guaranteed.** Tesseract.js reads the screenshot in the browser and
+  fills the fields, but every value is marked for checking rather than trusted, and the raw
+  text it read is shown so you can see what it actually saw. Amounts are the field it misses
+  most often, since a stylised rupee glyph defeats the parser. Accuracy on WhatsApp-
+  recompressed images is meaningfully worse than on a direct screenshot.
+- **First OCR use downloads about 14 MB** of library, WebAssembly and language data from a
+  CDN. It is cached afterwards and never fetched unless you upload an image — but on mobile
+  data it is a real cost.
 - **No real bank integration.** The gateway cross-check is modelled as a toggle. Real
   verification needs a PSP webhook, bank credit SMS parsing, or the RBI Account
   Aggregator framework.
@@ -213,8 +233,10 @@ This is a **prototype**, and the following are deliberately out of scope:
 
 ## Tech
 
-Vanilla HTML, CSS, and JavaScript in one file. No frameworks, no dependencies, no build
-step. Canvas is used for the file-hash experiments; everything else is plain DOM.
+Vanilla HTML, CSS, and JavaScript in one file. No framework, no build step, no
+`package.json`. One runtime dependency — Tesseract.js, fetched from a CDN only when an image
+is uploaded, so the page still loads in a handful of requests and still works with no
+network. Canvas is used for the file-hash experiments; everything else is plain DOM.
 
 Type: Bricolage Grotesque (display), Public Sans (body), IBM Plex Mono (data),
 Noto Sans Devanagari (Marathi).
