@@ -33,15 +33,18 @@ handling forty payments a day.
 
 ---
 
-## Three checks in one place
+## Six tools in one place
 
 | Module | Answers |
 |---|---|
 | **Message Scanner** | Is this WhatsApp or SMS a scam? 15 heuristics for Indian fraud in **English, Marathi and Hindi** — UPI-PIN-to-receive, APK links, remote-access apps, KYC and reward bait, task-job scams, spoofed sender IDs. Devanagari and Roman-script Marathi both covered |
 | **UPI ID & QR Check** | Is this UPI ID safe to pay? Validates the handle against the NPCI list, flags impersonation wording, and parses `upi://` QR text for pre-filled amounts |
 | **Verify Payment** | Is this payment screenshot genuine? 12 weighted rules over OCR-read fields |
+| **Emergency SOS** | Money already gone? One-tap 1930 dialer, and the account-freeze steps in the order that actually stops the loss |
+| **Shopkeeper Guide** | A 60-second checklist for spotting a spoofed payment screen held up across a counter |
+| **Spot The Scam** | Ten-card quiz with immediate explanation — four cards genuine on purpose, because a quiz where everything is a scam teaches suspicion rather than judgement |
 
-Every module scores 0–100, explains each finding in plain language, and ends with what to do next. Nothing is uploaded — all of it runs in the browser.
+The first three score 0–100, explain every finding in plain language, and end with what to do next. Nothing is uploaded — all of it runs in the browser.
 
 **English / मराठी throughout.** A switcher in the header translates navigation, headings, the safety modules and the quiz, including the ten quiz messages themselves. A sticky reminder sits above every page: *सुवर्ण नियम: पैसे मिळवण्यासाठी UPI PIN ची गरज नसते!*
 
